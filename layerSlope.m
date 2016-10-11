@@ -6,10 +6,6 @@
 %% Load imagery file
 load('array2d_20140506-1813_attended.mat')
 
-%% Set depth parameters
-depth = 600;
-depths = 590:620;
-
 %% Plot 2D imagery
 
 % X-axis
@@ -41,7 +37,7 @@ title(['Vertical 2D profile (y-direction) at Date/Time: ', datestr(dateStamp)])
 % Define variables
 xx = repmat([-50:49],641,1);%xxPix;
 yy = repmat(Rs',1,100);
-zz = pp_slicex;
+zz = pp_slicey;
 
 res = 2; % 1 2
 
@@ -65,6 +61,29 @@ colormap(jet)
 caxis([-100 -20])
 
 plot3(xx(imax),yy(imax),zmax,'k.')
+
+%% Run maxima per row
+
+pkVal = nan(size(zz,1),size(zz,2)); pkLoc = pkVal;
+for ii = 1:size(xx,2)
+    [val,loc] = findpeaks(zz(:,ii));
+    for jj = 1:length(val)
+        pkVal(jj,ii) = val(jj);
+        pkLoc(jj,ii) = loc(jj);
+    end
+end
+
+% Plotting fancies
+figure, hold on
+surf(xx,yy,db(zz),'EdgeColor','none')
+view(180,90)
+colormap(jet)
+caxis([-100 -20])
+
+plot3(xx(pkLoc),yy(pkLoc),pkLoc,'x')
+
+
+
 
 % To do: Obtain ellipses for layers, determine location of maximum axis,
 % determine angle from level of this axis. 

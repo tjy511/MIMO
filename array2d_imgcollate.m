@@ -7,7 +7,7 @@ fileloc = '/Users/tjy22/Documents/School/PhD/radar/data/process/mimo/unattended/
 data_list=dir(fullfile(fileloc,'*.mat'));
 
 % X or Y
-xy = 'yyy'; % xxx or yyy
+xy = 'xxx'; % xxx or yyy
 
 %% Create M
 
