@@ -64,17 +64,10 @@ plotimgprofile_gland(xx,yy,zz);
 plot3(xxPk,yyPk,zzPk,'k.')
 
 %% Identify connected components (layers)
-BW = ~isnan(zzPk);
-CC = bwconncomp(BW); 
+BW = binary(zzPk);
 
-% Remove vectors shorter than n pixels
+%CC = bwconncomp(
 
-% Plotting fancies
-plotimgprofile_gland(xx,yy,zz);
-for ii = 1:CC.NumObjects
-    layer = CC.PixelIdxList{ii};
-    plot3(xxPk(layer),yyPk(layer),zzPk(layer),'k')
-end
 
 %% SCRATCH
 
