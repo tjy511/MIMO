@@ -1,46 +1,12 @@
 % Tracing layers in MIMO
 %
 % TJ Young
-% 10.10.2016
+% 24.10.2016
 
 %% 0. Load imagery file
 load('array2d_20140506-1813_attended.mat')
-
-<<<<<<< HEAD
 % Define 3-dimensional variables
 xx = xxPix;%repmat([-50:49],641,1);
-=======
-%% Plot 2D imagery
-
-% X-axis
-figure, hold on
-surf(xxPix,Rs,db(pp_slicex),'EdgeColor','none')
-view(0,-90)
-colormap(jet)
-caxis([-100 -20])
-legend = colorbar('Ticks',[-100 -80 -60 -40 -20]);
-legend.Label.String = 'dB (Vrms)';
-xlabel('Range (m)')
-ylabel('Depth (m)')
-title(['Vertical 2D profile (x-direction) at Date/Time: ', datestr(dateStamp)])
-
-% Y-axis
-figure,hold on
-surf(yyPix,Rs,db(pp_slicey),'EdgeColor','none')
-view(0,-90)
-colormap(jet)
-caxis([-100 -20])
-legend = colorbar('Ticks',[-100 -80 -60 -40 -20]);
-legend.Label.String = 'dB (Vrms)';
-xlabel('Range (m)')
-ylabel('Depth (m)')
-title(['Vertical 2D profile (y-direction) at Date/Time: ', datestr(dateStamp)])
-
-%% Identify strong peaks in 2D
-
-% Define variables
-xx = repmat([-50:49],641,1);%xxPix;
->>>>>>> b55c568075ff30df25e2562bb644baba266f5c75
 yy = repmat(Rs',1,100);
 zz = pp_slicey;
 
