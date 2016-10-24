@@ -9,7 +9,7 @@ load('array2d_20140506-1813_attended.mat')
 % Define 3-dimensional variables
 xx = xxPix;%repmat([-50:49],641,1);
 yy = repmat(Rs',1,100);
-zz = pp_slicey;
+zz = pp_slicex;
 
 % Plot unaltered profile
 plotimgprofile_gland(xx,yy,zz);
@@ -102,6 +102,7 @@ for ii = 1:CC.NumObjects
     layers.r(ii) = sqrt(range(x)^2+range(y)^2); % Rho
     layers.t(ii) = atand(range(y)/range(x)); % Theta
 end
+% May also want to identify distance away from nadir...
 
 %% SCRATCH
 
