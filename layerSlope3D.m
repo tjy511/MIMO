@@ -59,18 +59,38 @@ plot3(xx(smax.mx),yy(smax.my),zmax(smax.mloc),'k*')
 % 3-dimensional location in Cartesian
 int.x = xx(smax.x);
 int.y = yy(smax.y);
-int.z = depth;
+int.z = -depth;
 int.mx = xx(smax.mx);
 int.my = yy(smax.my);
 int.mz = int.z; 
 
 % 3-dimensional location in Polar
 int.r = sqrt(int.x.^2+int.y.^2+int.z.^2);
-int.theta = acosd(int.z./int.r);
+int.theta = acosd(abs(int.z)./int.r);
 int.phi = atand(int.y./int.x);
+
+% Correct abiguous values of phi (as period of tangent is pi)
+for ii = 1:numel(int.phi)
+    if int.x(ii) < 0 && int.y(ii) > 0 % II quadrant
+        int.phi(ii) = int.phi(ii) + 180;
+    end
+    if int.x(ii) < 0 && int.y(ii) < 0 % III quadrant
+        int.phi(ii) = int.phi(ii) + 180;
+    end
+end
+
 int.mr = int.r(smax.mloc);
 int.mtheta = int.theta(smax.mloc);
 int.mphi = int.phi(smax.mloc);
 
-% TO FIX: Tangent period is pi so int.phi in 3rd and 4th quadrant are
-% ambiguous to 1st and 2nd quadrants
+%% Visualise layer in 3 dimensions
+
+% %% Example of a plane graph with format ( a * x + b * y + c * z = d )
+% 
+% x=-10:.1:10;
+% [X,Y] = meshgrid(x);
+% a=2; b=-3; c=10; d=-1;
+% Z=(d- a * X - b * Y)/c;
+% surf(X,Y,Z)
+% shading flat
+% xlabel('x'); ylabel('y'); zlabel('z')
