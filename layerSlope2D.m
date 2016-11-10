@@ -1,4 +1,4 @@
-% Tracing layers in MIMO
+% Tracing layers in MIMO in 2D
 %
 % TJ Young
 % 24.10.2016
@@ -12,7 +12,7 @@ zz = pp_slicey;
 
 % Plot unaltered profile
 plotimgprofile_gland(xx,yy,zz);
-title(['Vertical 2D profile (y-direction) at Date/Time: ', daint.selectr(dateStamp)])
+title(['Vertical 2D profile (y-direction) at Date/Time: ', datestr(dateStamp)])
 
 %% 1. Filter profile
 
