@@ -1,4 +1,4 @@
-function plotimgdepth_gland(xx,yy,zz)
+function h = plotimgdepth_gland(xx,yy,zz)
 
 % Quick function to plot 2-D depth layer of Greenland Store Data
 %
@@ -12,7 +12,7 @@ function plotimgdepth_gland(xx,yy,zz)
 %% Plot 2D imagery
 
 figure, hold on, axis equal
-surf(xx,yy,zz,'EdgeColor','none')
+h = surf(xx,yy,zz,'EdgeColor','none');
 view(0,90)
 colormap(jet)
 caxis([-100 -20])
