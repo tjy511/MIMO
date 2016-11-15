@@ -16,7 +16,10 @@
 array2d_final_gland
 
 % Identify data and type
-data_dir='/Users/tjy22/Documents/School/PhD/radar/data/field/array/attended/combined/20140506/';
+startup
+%data_dir='~/Documents/School/PhD/radar/data/field/array/attended/combined/20140506/';
+data_dir='~/Documents/School/PhD/radar/data/field/array/unattended/deployment1/timeseries/';
+fig_dir = '~/Documents/School/PhD/radar/data/process/mimo/unattended/';
 tsList = readtable('radarlist1.dat'); %'Survey_2014-05-06_181256.dat';
 processing = 'ts'; % Single or multiple chirps 'ts' 'single'
 
@@ -194,10 +197,11 @@ for fileNum = bstart:leapFrog:size(tsList,1)
         pp_slicey(ss,:)=(abs(PP_pix(:,Npix/2)));
     end
     
-    %% Save file
-    % fileDate = datestr(dateStamp,'yyyymmdd-HHMM');
-    % fileName = strcat('array2d_', fileDate, '.mat');
-    % save(fileName);
-    % disp(['Saved data results as file: ', fileName])
+    % Save file
+    fileDate = datestr(dateStamp,'yyyymmdd-HHMM');
+    fileName = strcat('array2d_', fileDate, '.mat');
+    fileNameFull = strcat(fig_dir,fileName);
+    save(fileNameFull);
+    disp(['Saved data results as file: ', fileName])
     end
 end
