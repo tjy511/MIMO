@@ -17,11 +17,11 @@ array2d_final_gland
 
 % Identify data and type
 data_dir='/Users/tjy22/Documents/School/PhD/radar/data/field/array/attended/combined/20140506/';
-tsList = 'Survey_2014-05-06_181256.dat';%readtable('radarlist1.dat');
-processing = 'single'; % Single or multiple chirps 'ts' 'single'
+tsList = readtable('radarlist1.dat'); %'Survey_2014-05-06_181256.dat';
+processing = 'ts'; % Single or multiple chirps 'ts' 'single'
 
 bstart = 1; % Starting burst (normally 1)
-leapFrog = 7*24; % In bursts. Set to 1 if processing = 'single'.
+leapFrog = 1*24; % In bursts. Set to 1 if processing = 'single'.
 
 % Parameters
 fs=40000; % Samples per chirp
