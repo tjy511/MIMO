@@ -7,7 +7,8 @@
 
 % cd to file
 startup
-cd(strcat(rwd,'data/process/mimo/unattended/'))
+%cd(strcat(rwd,'data/process/mimo/unattended/'))
+cd('~/OneDrive - University Of Cambridge/radar/data/process/mimo/unattended')
 
 % List files to load
 dirList = dir('*.mat');
@@ -129,7 +130,20 @@ for file = 1:numel(fileList)
             lyr.phi(file,cc) = int.phi(trk.i);
             lyr.dxy(file,cc) = trk.d;
             
-            Disp(['Processed layer for depth:',num2str(depth),'m'])
+            Disp(['Processed layer for depth: ',num2str(depth),'m'])
+            
+            % Replace reference layer with previous layer
+            if file > 1
+                if trk.d <= trk.xythresh % Success
+                    lyr0.x(cc) = lyr.x(file-1,cc);
+                    lyr0.y(cc) = lyr.y(file-1,cc);
+                    lyr0.r(cc) = lyr.r(file-1,cc);
+                    lyr0.theta(cc) = lyr.theta(file-1,cc);
+                    lyr0.phi(cc) = lyr.phi(file-1,cc);
+                elseif trk > trk.xythresh % Failure
+                    warning(['layer: ',num2str(depth),'m fails threshold'])
+                end
+            end
             
             % Plotting fancies
             plotimgdepth_gland(xx,yy,db(zz));
@@ -154,12 +168,12 @@ for file = 1:numel(fileList)
     % Renew reference file
     if file > 1
         lyr0.t = lyr.t(file-1);
-        lyr0.x = lyr.x(file-1,:);
-        lyr0.y = lyr.y(file-1,:);
+        %lyr0.x = lyr.x(file-1,:);
+        %lyr0.y = lyr.y(file-1,:);
         lyr0.z = lyr.z(file-1,:);
-        lyr0.r = lyr.r(file-1,:);
-        lyr0.theta = lyr.theta(file-1,:);
-        lyr0.phi = lyr.phi(file-1,:);
+        %lyr0.r = lyr.r(file-1,:);
+        %lyr0.theta = lyr.theta(file-1,:);
+        %lyr0.phi = lyr.phi(file-1,:);
     end
 end
 
@@ -169,42 +183,32 @@ end
 plane.x0 = lyr.x;
 plane.y0 = lyr.y;
 plane.z0 = lyr.z;
-plane.a = 0-plane.x0;
-plane.b = 0-plane.y0;
-plane.c = 0-plane.z0;
 
 set(0,'DefaultFigureVisible','on')
-% Plotting fancies
+
 for ff = 1:size(lyr.x,1)
-    fig(ff) = figure; hold on, grid on
-    plot3(0,0,0,'kp') % Location of radar unit
-    quiver3(0,0,0,-R,'Color',[0.6 0.6 0.6],'lineWidth',1.5) % Reference depth vector
-    
-    clear ax
-    for cc = 1:numel(depths)
-        % Calculate plane
-        plane.x = pxy(cc,:);
-        [plane.X,plane.Y] = meshgrid(plane.x);
-        plane.Z = (plane.a(ff,cc).*plane.X + plane.b(ff,cc).*plane.Y) ./ -plane.c(ff,cc) + plane.z0(ff,cc);
-        
-        % Plot layer components iteratively
-        quiver3(0,0,0,lyr.x(ff,cc)*1.1,lyr.y(ff,cc)*1.1,lyr.z(ff,cc)*1.1,'k'); % Vector to identified peak
-        plot3(lyr.x(ff,cc),lyr.y(ff,cc),lyr.z(ff,cc),'k*') % Location of identified peak
-        ax(cc) = surf(plane.X,plane.Y,plane.Z);% Plot layer with uniform patch
-        %patch(surf2patch(plane.X,plane.Y,plane.Z,db(zz)),'lineStyle','none'); % Plot layer with dB as patch
-    end
-    set(ax,'facealpha',0.5)
-    shading flat
-    legend = colorbar;
-    legend.Label.String = 'Depth (m)';
-    caxis([-depths(end) 0])
-    zlim([-depths(end)-50 0])
-    view(-15,15)
-    xlabel('x-position (m)'); ylabel('y-position (m)'); zlabel('Depth (m)')
+    fig(ff) = plotlayers_gland(plane.x0(ff,:),plane.y0(ff,:),plane.z0(ff,:),pxy,lyr.theta(ff,:));
     title(['3D layer profile at at Date/Time: ', datestr(lyr.t(ff))])
-    
-    % Save image
-    if cfg.doSave
-        saveas(fig(ff),strcat(),'jpg')
-    end
 end
+
+%%
+
+
+%{
+%% Interactive window
+set(0,'DefaultFigureVisible','on')
+
+% Establish figure
+tfig = figure('position',get(0,'Screensize'),'name','Time slider','NumberTitle','off'); % Figure
+h = subplot('position',[0.1 0.3 0.8 0.6]); % Plot
+
+% Allow variables to be passed to GUI
+global plane pxy 
+
+% Establish slider
+uicontrol('Style', 'text', 'String', 'Date/Time',...
+'units','normalized','Position', [0.1 0.1 0.1 0.1]);
+uicontrol('Style','slider','Min',0,'Max',5,...
+    'units','normalized','position',[0.2 0.1 0.7 0.1],...
+    'callback',@plotlayersGUI_gland);
+%}

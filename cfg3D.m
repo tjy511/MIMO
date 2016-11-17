@@ -7,6 +7,7 @@ cfg.fwindow = 4; % Window size in convolution
 
 % Parameters for peak identification
 cfg.pkselect = 1; % Use selected peaks from 2D processing
+cfg.pktolm = 5; % 2D tolerance for peaks (bins)
 cfg.pkthresh = -50; % dB threshold level for peaks
 cfg.pkprom = 0; % Filter by prominence threshold
 cfg.phiLim = [225 315]; % Limits for phi (degrees)

@@ -81,8 +81,9 @@ for cc = 1:numel(depths)
         end
         
         % Limit search to pre-selected peaks
+        % Note: Perhaps may be useful to interpolate through identified layers?
         if cfg.pkselect == 1
-            iInd = find(abs(ints(:,3)-depth) < 5,1); % Find closest z within 5 m depth
+            iInd = find(abs(ints(:,3)-depth) < cfg.pktolm,1); % Find closest z within 5 m depth
             %rInd = find(abs(int.y-ints(iInd,1))<cfg.rThresh*dy & abs(int.x-ints(iInd,2))<cfg.rThresh*dx);
             rInd = find(abs(int.y-ints(iInd,1))<cfg.rThresh*dy); % Only use layers within range threshold
             int.x = int.x(rInd); int.y = int.y(rInd);
@@ -134,40 +135,11 @@ end
 
 %% Visualise layer in 3 dimensions
 
-% Establish plane with normal vector and point
 plane.x0 = lyr.x;
 plane.y0 = lyr.y;
 plane.z0 = lyr.z;
-plane.a = 0-plane.x0;
-plane.b = 0-plane.y0;
-plane.c = 0-plane.z0;
 
-% Plotting fancies
 set(0,'DefaultFigureVisible','on')
-figure, hold on
-plot3(0,0,0,'kp') % Location of radar unit
-quiver3(0,0,0,-R) % Reference depth vector
 
-clear ax
-for cc = 1:numel(depths)
-    % Calculate plane
-    plane.x = pxy(cc,:);
-    zz = squeeze(ppr(cc,:,:));
-    [plane.X,plane.Y] = meshgrid(plane.x);
-    plane.Z = (plane.a(cc).*plane.X + plane.b(cc).*plane.Y) ./ -plane.c(cc) + plane.z0(cc);
-    
-    % Plot layer components iteratively
-    quiver3(0,0,0,lyr.x(cc)*1.1,lyr.y(cc)*1.1,lyr.z(cc)*1.1); % Vector to identified peak
-    plot3(lyr.x(cc),lyr.y(cc),lyr.z(cc),'k*') % Location of identified peak
-    ax(cc) = patch(surf2patch(plane.X,plane.Y,plane.Z,db(zz)),'lineStyle','none'); % Plot layer with dB as patch
-end
-
-legend = colorbar('Ticks',[-100 -80 -60 -40 -20]);
-set(ax,'facealpha',0.5)
-%axis equal
-colormap(jet)
-caxis([-100 -20])
-shading flat
-zlim([-depths(end)-50 0])
-view(-15,15)
-xlabel('x-position (m)'); ylabel('y-position (m)'); zlabel('Depth (m)')
+fig = plotlayers_gland(plane.x0,plane.y0,plane.z0,pxy,ppr);
+title(['3D layer profile at at Date/Time: ', datestr(dateStamp)])
