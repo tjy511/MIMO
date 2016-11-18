@@ -18,6 +18,8 @@ colormap(jet)
 caxis([-100 -20])
 legend = colorbar('Ticks',[-100 -80 -60 -40 -20]);
 legend.Label.String = 'dB (Vrms)';
+xlim([xx(1) xx(end)])
+ylim([yy(1) yy(end)])
 xlabel('X-position (m)')
 ylabel('Y-position (m)')
 %title(['2D image at depth= ', num2str(depth),'metres', datestr(dateStamp(tt,1))])
