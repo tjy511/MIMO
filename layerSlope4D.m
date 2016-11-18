@@ -7,8 +7,9 @@
 
 % cd to file
 startup
+global cfg 
 %cd(strcat(rwd,'data/process/mimo/unattended/'))
-cd('~/OneDrive - University Of Cambridge/radar/data/process/mimo/unattended')
+cd(strcat(rwd,'data/process/mimo/unattended/'));
 
 % List files to load
 dirList = dir('*.mat');
@@ -18,7 +19,7 @@ end
 
 % Run initial script
 layerSlope3D
-lyr0 = lyr; clear lyr
+lyr0 = lyr; clear cfg lyr
 
 % Establish depth vector
 depths = [25:25:400];
@@ -42,7 +43,6 @@ cfg.rThresh = 5; % Search range for pkselect;
 % Parameters for display
 cfg.verbose = 1; % Turn on display text
 cfg.doPlot = 0; % Turn on intermediate plotting
-
 cfg.doSave = 1; % Save images
 
 % Activate config
@@ -60,7 +60,7 @@ for file = 1:numel(fileList)
     
     % Load file
     load(fileList{file},'xxPix','yyPix','imgPlane','dateStamp','R')
-    disp(['Processing file: ',fileList{file}])
+    Disp(['Processing file: ',fileList{file}])
     lyr.t(file) = dateStamp;
     clear pr pxy int
     for cc = 1:numel(depths)
@@ -146,7 +146,7 @@ for file = 1:numel(fileList)
             end
             
             % Plotting fancies
-            plotimgdepth_gland(xx,yy,db(zz));
+            figLyr(file,cc) = plotimgdepth_gland(xx,yy,db(zz));
             plot3(0,0,1,'kp')
             plot3(xx(smax.x),yy(smax.y),max2.pwrOrig,'k.','markerSize',5)
             title(['2D depth profile at Depth: ', num2str(depth) ,'m at Date/Time: ', datestr(dateStamp)])
@@ -187,28 +187,76 @@ plane.z0 = lyr.z;
 set(0,'DefaultFigureVisible','on')
 
 for ff = 1:size(lyr.x,1)
-    fig(ff) = plotlayers_gland(plane.x0(ff,:),plane.y0(ff,:),plane.z0(ff,:),pxy,lyr.theta(ff,:));
+    figDepth(ff) = plotlayers_gland(plane.x0(ff,:),plane.y0(ff,:),plane.z0(ff,:),pxy,lyr.theta(ff,:));
     title(['3D layer profile at at Date/Time: ', datestr(lyr.t(ff))])
 end
 
-%%
+%% Make movie
 
+set(0,'DefaultFigureVisible','off')
 
-%{
-%% Interactive window
-set(0,'DefaultFigureVisible','on')
+vidName = 'layers_4d_track';
+vid = VideoWriter(strcat(vidName,'.avi'));
+vid.FrameRate = 1; 
+open(vid);
 
-% Establish figure
-tfig = figure('position',get(0,'Screensize'),'name','Time slider','NumberTitle','off'); % Figure
-h = subplot('position',[0.1 0.3 0.8 0.6]); % Plot
+% Filter out NaN depths
+figInd = ~isnan(lyr.x(1,:));
+tmp = 1:numel(lyr.x(1,:)); 
+figInd = tmp(figInd); 
+figPos = [1 2 3 4 6 7 8 9 11 12 13 14];
 
-% Allow variables to be passed to GUI
-global plane pxy 
+for ff = 1:size(lyr.x,1);
+    figM = figure; hold on
+    screenSize = get(0,'screenSize');
+    set(figM,'Position',[1 1 screenSize(3) screenSize(4)]); % Maximize figure
+    title(datestr(lyr.t));
+    
+    counter = 0;
+    for cc = figInd
+        counter = counter + 1;
+        axM(ff,cc) = subplot(3,5,figPos(counter)); hold on, grid on, axis equal
+        try
+        xx = figLyr(ff,cc).XData; yy = figLyr(ff,cc).YData; zz = figLyr(ff,cc).ZData;
+        surf(xx,yy,zz,'EdgeColor','none');
+        plot3(lyr.x(ff,cc),lyr.y(ff,cc),-lyr.z(ff,cc),'k*')
+        catch
+        xx = figLyr(1,cc).XData; yy = figLyr(1,cc).YData; zz = ones(size(xx,2),size(xx,2));
+        surf(xx,yy,zz,'faceColor','black','edgeColor','none');
+        alpha(0.5);
+        shading flat
+        end
+        hold off
+        
+        view(0,90)
+        colormap(jet)
+        caxis([-100 -20])
+        xlim([xx(1) xx(end)])
+        ylim([yy(1) yy(end)])
+        title([num2str(depths(cc)),' m'])
+    end
+    
+    xlabel(axM(ff,9),'X-position (m)');
+    xlabel(axM(ff,10),'X-position (m)');
+    xlabel(axM(ff,11),'X-position (m)');
+    xlabel(axM(ff,13),'X-position (m)');
+    ylabel(axM(ff,1),'Y-position (m)');
+    ylabel(axM(ff,5),'Y-position (m)');
+    ylabel(axM(ff,9),'Y-position (m)');
+    
+    legend = colorbar('units','normalized','Position',[0.8 0.11 0.05 0.7]);
+    legend.Label.String = 'dB (Vrms)';
+    legend.Ticks = [-100 -80 -60 -40 -20];
+    
+    vidTitle = uicontrol('style','text','units','normalized');
+    set(vidTitle,'String',datestr(lyr.t(ff)))
+    set(vidTitle,'fontWeight','bold','fontSize',16)
+    set(vidTitle,'position',[0.777 0.85 0.1 0.1])
+    
+    % Assign graph to array
+    M(ff) = getframe(figM);
+    writeVideo(vid,M(ff)); 
+    
+end
 
-% Establish slider
-uicontrol('Style', 'text', 'String', 'Date/Time',...
-'units','normalized','Position', [0.1 0.1 0.1 0.1]);
-uicontrol('Style','slider','Min',0,'Max',5,...
-    'units','normalized','position',[0.2 0.1 0.7 0.1],...
-    'callback',@plotlayersGUI_gland);
-%}
+close(vid);
