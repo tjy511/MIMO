@@ -8,7 +8,7 @@
 clear all
 close all
 
-plotelements=1; % Plot (1) out elements or not (0)
+plotelements=0; % Plot (1) out elements or not (0)
 
 %% Antenna separation
 

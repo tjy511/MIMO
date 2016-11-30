@@ -4,7 +4,7 @@
 % 24.10.2016
 
 %% 0. Load imagery file
-load('array2d_20140506-1813_attended.mat')
+load('array2d_20140506-1813.mat')
 cfg.slice = 'yy'; % 'xx' 'yy'
 
 % Define 3-dimensional variables
@@ -17,8 +17,8 @@ elseif cfg.slice == 'yy'
 end
 
 % Plot unaltered profile
-plotimgprofile_gland(xx,yy,zz);
-title(['Vertical 2D profile (y-direction) at Date/Time: ', datestr(dateStamp)])
+fig1 = plotimgprofile_gland(xx,yy,zz);
+%title(['Vertical 2D profile (y-direction) at Date/Time: ', datestr(dateStamp)])
 
 %% 1. Filter profile
 

@@ -4,7 +4,7 @@
 % 10.11.2016
 
 %% Load imagery file and associated parameters
-load('array2d_20140506-1813_attended.mat','xxPix','yyPix','imgPlane','dateStamp','R')
+load('array2d_20140506-1813.mat','xxPix','yyPix','imgPlane','dateStamp','R')
 close all
 
 % Parameters for depths

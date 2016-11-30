@@ -7,7 +7,6 @@
 
 % cd to file
 startup
-global cfg 
 %cd(strcat(rwd,'data/process/mimo/unattended/'))
 cd(strcat(rwd,'data/process/mimo/unattended/'));
 
@@ -20,6 +19,7 @@ end
 % Run initial script
 layerSlope3D
 lyr0 = lyr; clear cfg lyr
+global cfg
 
 % Establish depth vector
 depths = [25:25:400];
@@ -184,17 +184,32 @@ plane.x0 = lyr.x;
 plane.y0 = lyr.y;
 plane.z0 = lyr.z;
 
-set(0,'DefaultFigureVisible','on')
+clear vid M
+vidName = 'layers_4d_side_track';
+vid = VideoWriter(strcat(vidName,'.avi'));
+vid.FrameRate = 1; 
+open(vid);
+
+set(0,'DefaultFigureVisible','off')
 
 for ff = 1:size(lyr.x,1)
     figDepth(ff) = plotlayers_gland(plane.x0(ff,:),plane.y0(ff,:),plane.z0(ff,:),pxy,lyr.theta(ff,:));
     title(['3D layer profile at at Date/Time: ', datestr(lyr.t(ff))])
+    
+    screenSize = get(0,'screenSize');
+    set(figDepth,'Position',[1 1 screenSize(3) screenSize(3)]); % Maximize figure
+    
+    M(ff) = getframe(figDepth(ff));
+    writeVideo(vid,M(ff)); 
 end
+
+close(vid)
 
 %% Make movie
 
 set(0,'DefaultFigureVisible','off')
 
+clear vid M
 vidName = 'layers_4d_track';
 vid = VideoWriter(strcat(vidName,'.avi'));
 vid.FrameRate = 1; 

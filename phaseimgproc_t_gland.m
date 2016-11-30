@@ -17,15 +17,14 @@ array2d_final_gland
 
 % Identify data and type
 startup
-%data_dir='~/Documents/School/PhD/radar/data/field/array/attended/combined/20140506/';
-data_dir=strcat(rwd,'/data/field/array/unattended/deployment3/timeseries/');
-fig_dir = strcat(rwd,'/data/process/mimo/unattended/');
-tsList = readtable('radarlist3-1.dat'); %'Survey_2014-05-06_181256.dat';
-processing = 'ts'; % Single or multiple chirps 'ts' 'single'
+data_dir='~/Documents/School/PhD/radar/data/field/array/attended/combined/20150705/';
+%data_dir=strcat(rwd,'/data/field/array/unattended/deployment3/timeseries/');
+fig_dir = strcat(rwd,'/data/process/mimo/attended/');
+tsList = 'Survey_2015-07-03_122127.dat'; %readtable('radarlist3-1.dat');
+processing = 'single'; % Single or multiple chirps 'ts' 'single'
 
 bstart = 1; % Starting burst (normally 1)
 leapFrog = 1*24; % In bursts. Set to 1 if processing = 'single'.
-parCore = 2; % Cores for Parallel mode
 
 % Parameters
 fs=40000; % Samples per chirp (Note 40001 for deployment4)
@@ -64,7 +63,7 @@ for fileNum = bstart:leapFrog:size(tsList,1)
     disp(['Running script on burst obtained at: ',datestr(dateStamp)])
     
     %% Iterate processing for every depth step
-    parfor ss=1:length(Rs,parCore)
+    for ss=1:length(Rs)
         
         R=Rs(ss); % Range at step ss
         ImgPlane=zeros(Npix*Npix,2); % Pre-allocate image plane
