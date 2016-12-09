@@ -4,7 +4,12 @@
 % 24.10.2016
 
 %% 0. Load imagery file
-load('array2d_20140506-1813.mat')
+fileIn = 'array2d_20150703-1221.mat';
+load(fileIn)
+% array2d_20140506-1813.mat
+% array2d_20140726-1727.mat
+% array2d_20150703-1221.mat
+
 cfg.slice = 'yy'; % 'xx' 'yy'
 
 % Define 3-dimensional variables
@@ -107,5 +112,6 @@ ints = [intS.x' intS.y' intS.z'];
 ints = sortrows(ints,3);
 
 startup
+fileOut = strcat('intSelect_',fileIn(9:16));
 cd(strcat(rwd,'/results/mimo/'));
-save('intSelect','ints');
+save(fileOut,'ints');

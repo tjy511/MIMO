@@ -1,3 +1,5 @@
+function ve = array2d_final_gland(doPlot)
+
 % Script to display the virtual element positions in 2D mimo array
 % Modified for L shape
 % Script written by Lai Bun Lok
@@ -5,10 +7,11 @@
 
 %% Housekeeping
 
-clear all
-close all
-
-plotelements=0; % Plot (1) out elements or not (0)
+%clear all
+%close all
+if ~exist('doPlot','var')
+    doPlot=1; % Plot (1) out elements or not (0)
+end
 
 %% Antenna separation
 
@@ -148,7 +151,7 @@ end
 
 %% Plot them out in xy
 
-if plotelements==1
+if doPlot==1
     figure
     hold
     xlabel('x position (m)')

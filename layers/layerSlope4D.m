@@ -7,6 +7,7 @@
 
 % cd to file
 startup
+global cfg 
 %cd(strcat(rwd,'data/process/mimo/unattended/'))
 cd(strcat(rwd,'data/process/mimo/unattended/'));
 
@@ -59,9 +60,10 @@ for file = 1:numel(fileList)
     %% Set up file structure
     
     % Load file
-    load(fileList{file},'xxPix','yyPix','imgPlane','dateStamp','R')
+    %load(fileList{file},'xxPix','yyPix','imgPlane','dateStamp','R')
+    load(fileList{file})
     Disp(['Processing file: ',fileList{file}])
-    lyr.t(file) = dateStamp;
+    lyr.t(file) = vdat.TimeStamp;
     clear pr pxy int
     for cc = 1:numel(depths)
         

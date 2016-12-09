@@ -17,7 +17,7 @@ array2d_final_gland
 
 % Identify data and type
 startup
-data_dir='~/Documents/School/PhD/radar/data/field/array/attended/combined/20150705/';
+data_dir='/Users/tjy511/OneDrive - University Of Cambridge/radar/data/field/array/attended/combined/20150705';
 %data_dir=strcat(rwd,'/data/field/array/unattended/deployment3/timeseries/');
 fig_dir = strcat(rwd,'/data/process/mimo/attended/');
 tsList = 'Survey_2015-07-03_122127.dat'; %readtable('radarlist3-1.dat');

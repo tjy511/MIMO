@@ -4,8 +4,12 @@
 % 10.11.2016
 
 %% Load imagery file and associated parameters
-load('array2d_20140506-1813.mat','xxPix','yyPix','imgPlane','dateStamp','R')
 close all
+fileIn = 'array2d_20140506-1813.mat';
+load(fileIn,'xxPix','yyPix','imgPlane','dateStamp','R')
+% array2d_20140506-1813.mat
+% array2d_20140726-1727.mat
+% array2d_20150703-1221.mat
 
 % Parameters for depths
 depths = [25:25:400];
@@ -22,17 +26,17 @@ cfg.fwindow = 4; % Window size in convolution
 % Parameters for peak identification
 cfg.pkselect = 1; % Use selected peaks from 2D processing
 cfg.pktolm = 5; % 2D tolerance for peaks (bins)
-cfg.pkthresh = -50; % dB threshold level for peaks
+cfg.pkthresh = -60; % dB threshold level for peaks
 cfg.pkprom = 0; % Filter by prominence threshold
 cfg.phiLim = [225 315]; % Limits for phi (degrees)
 cfg.rThresh = 5; % Search range for pkselect; 
 
 % Parameters for plotting
-cfg.doPlot = 0; % Turn on intermediate plotting
+cfg.doPlot = 1; % Turn on intermediate plotting
 
 % Activate config
 if cfg.pkselect == 1
-    load('intSelect.mat')
+    load(strcat('intSelect_',fileIn(9:16),'.mat'))
 end
 if cfg.doPlot == 0
     set(0,'DefaultFigureVisible','off')
