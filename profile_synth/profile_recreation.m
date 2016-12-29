@@ -33,7 +33,7 @@ dPhy = 0.83; % Default: 0.83 [m]
 % Beam forming
 freq = 3e8; % MIMO frequency [Hz]
 thetaStA = -30:30; % Steering angle range [degrees]
-antSelect = 'pencil'; % Antenna selection ('isotropic' 'pencil' 'bowtie' 'helix' 'dipole')
+antSelect = 'dipole'; % Antenna selection ('isotropic' 'pencil' 'bowtie' 'helix' 'dipole')
 weight = 1; % Weighting beam with array factor [binary]
 
 % Switches
