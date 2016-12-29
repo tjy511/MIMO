@@ -11,8 +11,8 @@ function h = plotimgdepth_gland(xx,yy,zz)
 
 %% Plot 2D imagery
 
-figure, hold on, axis equal
-h = surf(xx,yy,zz,'EdgeColor','none');
+h = figure; hold on, axis equal
+surf(xx,yy,zz,'EdgeColor','none');
 view(0,90)
 colormap(jet)
 caxis([-100 -20])
@@ -22,7 +22,7 @@ xlim([min(min(xx)) max(max(xx))])
 ylim([min(min(yy)) max(max(yy))])
 %xlim([xx(1) xx(end)])
 %ylim([yy(1) yy(end)])
-xlabel('X-position (m)')
-ylabel('Y-position (m)')
+xlabel('x-position [m]')
+ylabel('y-position [m]')
 %title(['2D image at depth= ', num2str(depth),'metres', datestr(dateStamp(tt,1))])
 %set(gcf, 'Position', get(0,'Screensize')); % Maximize figure

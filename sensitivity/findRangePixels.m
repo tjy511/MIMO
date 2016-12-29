@@ -15,31 +15,46 @@ function [R_idx,R_theta] = findRangePixels(zz_dist,R)
 % 07 December 2016
 
 % Pre-allocate matrices
-R_idx = logical(zeros(size(zz_dist)));
-R_rmag = zeros(1,size(zz_dist,2));
-R_ridx = R_rmag;
+R_idx = false(size(zz_dist));
 
 % Run through each column to find first pixel nearest to specified depth
+[R_rmag,R_ridx] = min(abs(zz_dist-R)); 
+
+% Checks: shallow ranges
+R_ridx(zz_dist(1,:) > R) = NaN; 
+
+% Checks: deep ranges
+R_dr = zz_dist(end,:) - zz_dist(end-1,:);
+R_ridx(R-zz_dist(end,:) > R_dr) = NaN; 
+
 for jj = 1:size(zz_dist,2) 
-    
-    % Magnitude and index of cell nearest to R
-    [R_rmag(jj),R_ridx(jj)] = min(abs(zz_dist(:,jj)-R)); 
-    
-    % Checks: shallow ranges
-    if zz_dist(1,jj) > R
-        R_ridx(jj) = NaN; % All pixels in column too far from R
-    end
-    % Checks: deep ranges
-    if zz_dist(end,jj) < R
-        R_dr = zz_dist(end,jj) - zz_dist(end-1,jj);
-        if R - zz_dist(end,jj) > R_dr
-            R_ridx(jj) = NaN; % R is deeper than all pixels in column
-        end
-    end
-    
     % Assign indices to master index
     if ~isnan(R_ridx(jj))
         R_idx(R_ridx(jj),jj) = 1;
     end
-    
 end
+
+% % Run through each column to find first pixel nearest to specified depth
+% for jj = 1:size(zz_dist,2) 
+%     
+%     % Magnitude and index of cell nearest to R
+%     [R_rmag(jj),R_ridx(jj)] = min(abs(zz_dist(:,jj)-R)); 
+%     
+%     % Checks: shallow ranges
+%     if zz_dist(1,jj) > R
+%         R_ridx(jj) = NaN; % All pixels in column too far from R
+%     end
+%     % Checks: deep ranges
+%     if zz_dist(end,jj) < R
+%         R_dr = zz_dist(end,jj) - zz_dist(end-1,jj);
+%         if R - zz_dist(end,jj) > R_dr
+%             R_ridx(jj) = NaN; % R is deeper than all pixels in column
+%         end
+%     end
+%     
+%     % Assign indices to master index
+%     if ~isnan(R_ridx(jj))
+%         R_idx(R_ridx(jj),jj) = 1;
+%     end
+%     
+% end

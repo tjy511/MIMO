@@ -1,4 +1,4 @@
-function ve = array2d_final_gland(doPlot)
+function [ant,ve] = array2d_final_gland(doPlot)
 
 % Script to display the virtual element positions in 2D mimo array
 % Modified for L shape
@@ -99,6 +99,8 @@ rx(6,1)=xr6; rx(6,2)=yr6;
 rx(7,1)=xr7; rx(7,2)=yr7;
 rx(8,1)=xr8; rx(8,2)=yr8;
 %rx(9,1)=xr9; rx(9,2)=yr9;
+
+ant(:,1) = tx(:,1); ant(:,2) = rx(:,2);
 
 % Calculate the virtual element positions
 
