@@ -4,7 +4,7 @@ function fig = plotimgprofile_gland(xx,yy,zz)
 %
 % Inputs: 
 % - Locations in x and y axes (normally 641x100 in size)
-% - Power return (absolute) in z (depth) axis
+% - Magnitude (Amplitude) return (absolute) in z (depth) axis
 %
 % TJ Young
 % 08.12.2015
@@ -12,12 +12,13 @@ function fig = plotimgprofile_gland(xx,yy,zz)
 %% Plot 2D imagery
 
 % X-axis
-fig = figure; hold on
-surf(xx,yy,db(zz),'EdgeColor','none')
+fig = figure; 
+hold on, box on, grid on
+surf(xx,yy,db(zz,'voltage'),'EdgeColor','none')
 view(0,-90)
 colormap(jet)
 caxis([-100 -20])
 legend = colorbar('Ticks',[-100 -80 -60 -40 -20]);
-legend.Label.String = 'dB (Vrms)';
-xlabel('Cross-range (m)')
-ylabel('Depth (m)')
+legend.Label.String = 'dB (V_{rms})';
+xlabel('Cross-range [m]')
+ylabel('Depth [m]')

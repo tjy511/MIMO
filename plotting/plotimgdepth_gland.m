@@ -11,8 +11,9 @@ function h = plotimgdepth_gland(xx,yy,zz)
 
 %% Plot 2D imagery
 
-h = figure; hold on, axis equal
-surf(xx,yy,zz,'EdgeColor','none');
+h = figure; 
+hold on, axis equal, box on, grid on
+surf(xx,yy,db(zz,'voltage'),'EdgeColor','none');
 view(0,90)
 colormap(jet)
 caxis([-100 -20])

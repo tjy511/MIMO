@@ -8,37 +8,53 @@ ccc
 %% Input parameters
 
 % Antenna parameters
-ant.type = 'isotropic'; % 'bowtie' 'helix' 'pencil' 'isotropic'
-thetaStA = 30; % Steering angle
-freqs = [2e8 3e8 4e8]; % Wave frequency [Hz]
-c = 3e8/sqrt(3.18); % Wave speed [m/s] (Eq. 6.2 of Hubbard & Glasser 2005)
+ant.type = 'isotropic'; % 'bowtie' 'helix' 'pencil' 'isotropic' 'dipole'
+thetaStA = 0; % Steering angle
+freqs = 3e8; % Wave frequency [Hz]
+c = 3e8;%/sqrt(3.18); % Wave speed [m/s] (Eq. 6.2 of Hubbard & Glasser 2005)
 
 % Antenna locations
-ant.loc = 'other'; % 'store1' 'other'
+ant.loc = 'virtual'; % 'store1' 'real' 'virtual'
 txrx = [32 1]; % Default: [8 8]
 quadrant = 4; % Default: 4
 off = [2.49 -2.49]; % Default: [2.49 -2.49]
-dPhy = 0.83; % Default: 0.83
+dPhy = 1 * c/3e8; %3 * c/3e8; % Default: 0.83
+ampWeight = 'binomial'; % 'uniform' 'triangular' 'binomial'
 
-doPlot = 1; 
-doHPBW = 0; 
-doSave = 1;
+doPlot = 1;
+doHPBW = 1;
+doSave = 0;
 
 %% Load bowtie antenna radiation pattern
 [ant.theta,ant.RA,ant.RE,fig_bp] = antennaBP(ant.type,doPlot);
 
-%% Load 2D array
-
-% Calculate virtual antenna locations
-if strcmp(ant.loc,'store1') == 1
-    [ve,fig_ant] = antennaLoc(ant.loc,doPlot);
+%% Calculate amplitude weighting
+lowpt = 0.25; highpt = 1;
+if mod(txrx(1),2) == 0
+    midpt = [txrx(1)/2 txrx(1)/2+1];
 else
-    [ve,fig_ant] = antennaLoc(txrx,quadrant,off,dPhy,doPlot);
+    midpt = txrx(1)/2 + 0.5;
 end
-xPos = ve(:,1); yPos = ve(:,2);
 
-% Calculate weights
-w = ones(1,numel(xPos))/numel(xPos);
+switch ampWeight
+    
+    case 'uniform'
+        w = ones(1,txrx(1)); % Weights
+    case 'triangular'
+        if mod(txrx(1),2) == 0
+            w = interp1([1 midpt txrx(1)],[lowpt,highpt,highpt,lowpt],1:txrx(1));
+        else
+            w = interp1([1 midpt txrx(1)],[lowpt,highpt,lowpt],1:txrx(1));
+        end
+        w = w ./ sum(w);
+    case 'binomial'
+        w = binopdf(1:txrx(1),txrx(1),0.5);
+        if mod(txrx(1),2) == 0
+            w = [w(1:midpt(1)) w(midpt(1)) w(midpt(1)+1:end-1)];
+        end
+end
+
+w = w ./ sum(w);
 
 %% Calculate array geometry and array factor for different frequencies
 
@@ -46,35 +62,45 @@ w = ones(1,numel(xPos))/numel(xPos);
 thetaScA = ant.theta;
 phiScA = 0;
 
-% Calculate array pattern and compute radiation pattern 
-%bowtieWeight = [bowtieInterp(3,271:360) bowtieInterp(3,1:91)];
-
-for ii = 1:numel(freqs)
-    freq = freqs(ii);
+for ii = 1:numel(dPhy)
+    
+    % Calculate virtual antenna locations
+    switch ant.loc
+        case 'store1'
+            [ve,fig_ant] = antennaLoc(ant.loc,doPlot);
+        case 'real'
+            [ve,fig_ant] = antennaLoc(ant.loc,txrx,dPhy(ii),quadrant,off,doPlot);
+        case 'virtual'
+            [ve,fig_ant] = antennaLoc(ant.loc,txrx,dPhy(ii),doPlot);
+    end
+    
+    xPos = ve(:,1); yPos = ve(:,2); % Virtual element positions
+    freq = freqs;
+    
     W(ii,:) = arrayFactor(xPos,yPos,w,freq,c,thetaScA,phiScA,thetaStA); % Unweighted
     WWeight(ii,:) = W(ii,:) .* ant.RE; % Weight W with antenna beamform
 end
 
+%% Plot the array pattern for various frequencies
+fig_uw = plotBeamPattern(db(W(:,901:2701),'power'), freqs, thetaScA(:,901:2701)); % Unweighted
+set(gcf,'units','normalized','position',[0 0 1/2 1])
+
+fig_w = plotBeamPattern(db(WWeight(:,901:2701),'power'), freqs, thetaScA(:,901:2701)); % Weighted
+set(gcf,'units','normalized','position',[1/2 0 1/2 1])
+
 %% Calculate HPBW
 if doHPBW
-    ant.hpbwRA(1) = hpbw(dB(ant.RA),ant.theta); % Azimuth HPBW [deg]
-    ant.hpbwRE(2) = hpbw(dB(ant.RE),ant.theta); % Elevation HPBW [deg]
-    W_hpbw = hpbw(dB(WWeight),thetaScA); % Array factor HPBW [deg]
+    ant.hpbwRA(1) = hpbw(ant.theta,ant.RA); % Azimuth HPBW [deg]
+    ant.hpbwRE(2) = hpbw(ant.theta,ant.RE); % Elevation HPBW [deg]
+    W_hpbw = hpbw(thetaScA,W); % Array factor HPBW [deg]
+    WWeight_hpbw = hpbw(thetaScA,WWeight); % Array factor HPBW [deg]
 end
-
-%% Plot the array pattern for various frequencies 
-fig_uw = plotBeamPattern(db(W(:,901:2701)), freqs, thetaScA(:,901:2701)); % Unweighted
-title(['Array factor for unweighted phased array of ',ant.type,' antennas'])
-set(gcf,'units','normalized','position',[0 0 1/2 1])
-fig_w = plotBeamPattern(db(WWeight(:,901:2701)), freqs, thetaScA(:,901:2701)); % Weighted
-title(['Array factor for weighted phased array of ',ant.type,' antennas'])
-set(gcf,'units','normalized','position',[1/2 0 1/2 1])
 
 %% Saving fancies
 
 if doSave
     % Create and cd to folder
-    fileLoc = strcat('~/Google Drive/Academic/papers/paper3/figs/recreation/',...
+    fileLoc = strcat('~/Google Drive/Academic/papers/paper3/figs/wavelength/',...
         num2str(txrx(1)),'-',num2str(txrx(2)),'_',num2str(dPhy*1000));
     try
         cd(fileLoc);
@@ -82,7 +108,7 @@ if doSave
         mkdir(fileLoc); cd(fileLoc);
     end
     set([fig_w fig_uw],'color','w')
-    export_fig(fig_uw,strcat(ant.type,'_AF_uw_',num2str(thetaStA),'.png'),'-m2');
+    %export_fig(fig_uw,strcat(ant.type,'_AF_uw_',num2str(thetaStA),'.png'),'-m2');
     export_fig(fig_w,strcat(ant.type,'_AF_w_',num2str(thetaStA),'.png'),'-m2');
     if doPlot
         set([fig_bp fig_ant],'color','w')

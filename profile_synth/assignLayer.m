@@ -1,4 +1,4 @@
-function [zz,zz_reflect] = assignLayer(xx,yy,zz,zz_reflect,L,A,bedSelect,param,addBed)
+function [zz,zz_reflect] = assignLayer(xx,yy,zz,zz_reflect,L,A,bedSelect,param,varargin)
 
 % Implements a layer in a 2D ice profile through depth and assigns a
 % reflectivity parameter to all identified pixels
@@ -6,7 +6,18 @@ function [zz,zz_reflect] = assignLayer(xx,yy,zz,zz_reflect,L,A,bedSelect,param,a
 % TJ Young
 % 09 December 2016
 
+if nargin < 9
+    bedAdd1 = 'none'; bedAdd2 = 'none';
+end
 
+if nargin >= 9
+    bedAdd1 = varargin{1};
+    bedAdd2 = 'none';
+end
+
+if nargin == 10
+    bedAdd2 = varargin{2};
+end
 
 switch bedSelect
     case 'flat'
@@ -36,8 +47,21 @@ switch bedSelect
         end
 end
 
-% Add bed
-if exist('addBed','var')
+% Add subglacial mountain (unfinished)
+if strcmp(bedAdd1,'addHill') | strcmp(bedAdd2,'addHill')
+    domain = [0.1 0.3]; apex = 500;
+    idxh = ceil(size(xx,2)*domain(1)):ceil(size(xx,2)*domain(2)); % Domain for mountain
+    idx(idxh) = NaN; % Clear domain
+    idxI = [idxh(1)-1 floor(length(idxh)/2)+idxh(1) idxh(end)+1]; % start/mid/end of interpolation index
+    [~,idxA] = min(abs(yy(:,1)-apex));
+    idx(idxI(2)) = idxA; % Set apex at middle of domain
+    mtn = interp1([xx(1,idxI(1)) xx(1,idxI(2)) xx(1,idxI(3))], ...
+        [idx(idxI(1)) idx(idxI(2)) idx(idxI(3))], xx(1,idxI(1):idxI(3))); % Interpolate between points to obtain mountain
+    mtn = round(mtn);
+end
+
+% Add subglacial bed
+if strcmp(bedAdd1,'addBed') | strcmp(bedAdd2,'addBed')
     Asg = A-20; % Power of subglacial profile
     for ii = 1:length(idx)
         zz(idx(ii)+1:end,ii) = db2mag(Asg); % Change value of pixels to subglacial layer reflectivity

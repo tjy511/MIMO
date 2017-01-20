@@ -50,7 +50,7 @@ ylabel('y-position (m)');
 zlabel('Depth (m)');
 
 if numel(size(ppr)) == 3
-    legend.Label.String = 'dB (Vrms)';
+    legend.Label.String = 'dB (V_{rms})';
     colormap(jet)
     caxis([-100 -20])
 else

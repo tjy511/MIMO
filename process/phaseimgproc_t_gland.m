@@ -12,21 +12,18 @@
 
 %% Prep work and identify parameters
 
-% Calculate virtual antenna locations
-array2d_final_gland
-
 % Identify data and type
 startup
-data_dir='/Users/tjy511/OneDrive - University Of Cambridge/radar/data/field/array/attended/combined/20150705';
-%data_dir=strcat(rwd,'/data/field/array/unattended/deployment3/timeseries/');
-fig_dir = strcat(rwd,'/data/process/mimo/attended/');
-tsList = 'Survey_2015-07-03_122127.dat'; %readtable('radarlist3-1.dat');
+deployment = 3; % 1 2 3
 processing = 'single'; % Single or multiple chirps 'ts' 'single'
+%fig_dir = strcat(rwd,'/data/process/mimo/attended/');
+fig_dir = '~/Downloads/';
 
 bstart = 1; % Starting burst (normally 1)
 leapFrog = 1*24; % In bursts. Set to 1 if processing = 'single'.
 
 % Parameters
+dphy = 0.83; % Antenna separation (centre-to-centre)
 fs=40000; % Samples per chirp (Note 40001 for deployment4)
 Npix=100; % number of pixels in Npix*Npix image plane.
 fov=25; % field of view plus-minus degrees.
@@ -40,6 +37,42 @@ yyPix=zeros(length(Rs),Npix);
 pp_slicey=zeros(length(Rs),Npix);
 pp_slicex=zeros(length(Rs),Npix);
 r=zeros(Npix*Npix,64);
+
+%% Load antenna locations
+folderLoc = '/Users/tjy511/OneDrive - University Of Cambridge/radar/data/field/array/';
+switch processing
+    case 'ts'
+        switch deployment
+            case 1
+                [txLoc,rxLoc,ve] = antennaLoc('store1',1);
+                tsList = readtable('radarlist1.dat');
+                data_dir = strcat(folderLoc,'unattended/deployment1/timeseries/');
+            case 2
+                [txLoc,rxLoc,ve] = antennaLoc('store2',1);
+                tsList = readtable('radarlist3a.dat');
+                data_dir = strcat(folderLoc,'unattended/deployment3/timeseries/');
+            case 3
+                [txLoc,rxLoc,ve] = antennaLoc('store3',1);
+                tsList = readtable('radarlist4a.dat');
+                data_dir = strcat(folderLoc,'unattended/deployment4/timeseries/');
+        end
+    case 'single'
+        switch deployment
+            case 1
+                [txLoc,rxLoc,ve] = antennaLoc('store1',1);
+                tsList = 'Survey_2014-05-06_181256.dat';
+                data_dir = strcat(folderLoc,'attended/combined/20140506/');
+            case 2
+                [txLoc,rxLoc,ve] = antennaLoc('store2',1);
+                tsList = 'Survey-2014-07-26_172711.dat';
+                data_dir = strcat(folderLoc,'attended/combined/20140726/');
+            case 3
+                [txLoc,rxLoc,ve] = antennaLoc('store3',1);
+                tsList = 'Survey_2015-07-03_122127.dat';
+                data_dir = strcat(folderLoc,'attended/combined/20150705/');
+        end
+end
+ant = [txLoc(:,1) rxLoc(:,2)];
 
 %% Load file
 
@@ -56,7 +89,7 @@ for fileNum = bstart:leapFrog:size(tsList,1)
     end
     dateStamp=vdat.TimeStamp;
     fileDate = datestr(dateStamp,'yyyymmdd-HHMM');
-    fileName = strcat('array2d_', fileDate, '.mat');
+    fileName = strcat('new_array2d_', fileDate, '.mat');
     
     if exist(fileName,'file')==0
     disp('*********************************************************')

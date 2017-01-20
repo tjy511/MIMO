@@ -5,11 +5,28 @@
 
 %% Load imagery file and associated parameters
 close all
-fileIn = 'array2d_20140506-1813.mat';
+deployment = 1; % 1 2 3
+switch deployment
+    case 1
+        fileIn = 'array2d_20140506-1813.mat';
+        cfg.phiLim = [90-45 90+60]; % Limits for phi (degrees) from x-axis vector [225 315]
+        cfg.pkthresh = -50; % dB threshold level for peaks
+        cfg.pktolm = 10; % 2D tolerance for peaks (bins in z-direction)
+        cfg.rThresh = 10; % Search range for pkselect (m in x-y direction); 
+    case 2
+        fileIn = 'array2d_20140726-1727.mat';
+        cfg.phiLim = [90 180+45]; % Limits for phi (degrees) from x-axis vector [225 315]
+        cfg.pkthresh = -52.5; % dB threshold level for peaks
+        cfg.pktolm = 10; % 2D tolerance for peaks (bins in z-direction)
+        cfg.rThresh = 10; % Search range for pkselect (bins in x-y direction); 
+    case 3
+        fileIn = 'array2d_20150703-1221.mat';
+        cfg.phiLim = [180-45 180+90]; % Limits for phi (degrees) from x-axis vector [225 315]
+        cfg.pkthresh = -50; % dB threshold level for peaks
+        cfg.pktolm = 10; % 2D tolerance for peaks (bins in z-direction)
+        cfg.rThresh = 8; % Search range for pkselect (bins in x-y direction); 
+end
 load(fileIn,'xxPix','yyPix','imgPlane','dateStamp','R')
-% array2d_20140506-1813.mat
-% array2d_20140726-1727.mat
-% array2d_20150703-1221.mat
 
 % Parameters for depths
 depths = [25:25:400];
@@ -25,18 +42,21 @@ cfg.fwindow = 4; % Window size in convolution
 
 % Parameters for peak identification
 cfg.pkselect = 1; % Use selected peaks from 2D processing
-cfg.pktolm = 5; % 2D tolerance for peaks (bins)
-cfg.pkthresh = -60; % dB threshold level for peaks
+%cfg.pktolm = 10; % 2D tolerance for peaks (bins in z-direction)
+%cfg.pkthresh = -50; % dB threshold level for peaks
 cfg.pkprom = 0; % Filter by prominence threshold
-cfg.phiLim = [225 315]; % Limits for phi (degrees)
-cfg.rThresh = 5; % Search range for pkselect; 
+%cfg.phiLim = [180-45 180+90]; % Limits for phi (degrees) from x-axis vector [225 315]
+%cfg.rThresh = 8; % Search range for pkselect (bins in x-y direction); 
 
 % Parameters for plotting
-cfg.doPlot = 1; % Turn on intermediate plotting
+cfg.doPlot = 0; % Turn on intermediate plotting
+cfg.doSave = 0; % Turn on figure exporting
 
 % Activate config
 if cfg.pkselect == 1
-    load(strcat('intSelect_',fileIn(9:16),'.mat'))
+    intsx = load(strcat('intSelect_',fileIn(9:16),'x.mat'));
+    intsy = load(strcat('intSelect_',fileIn(9:16),'y.mat'));
+    intsx = intsx.ints; intsy = intsy.ints;
 end
 if cfg.doPlot == 0
     set(0,'DefaultFigureVisible','off')
@@ -44,7 +64,7 @@ end
 
 %% Run through layers
 
-clear pr pxy int
+clear pr pxy ppr int iIndx iIndy rIndx rIndy rInd
 for cc = 1:numel(depths)
     
     %% Establish structure
@@ -65,7 +85,7 @@ for cc = 1:numel(depths)
     
     % Apply filters to remove noise
     if cfg.filter
-        filt = (fspecial(cfg.ftype,cfg.fsize,cfg.fsigma)); % Guassian lowpass filter
+        filt = (fspecial(cfg.ftype,cfg.fsize,cfg.fsigma)); % Gaussian lowpass filter
         zz = medfilt2(zz,[cfg.fwindow,cfg.fwindow]); % Median filtering in 2 directions
         zz = conv2(zz,filt,'same'); % 2-D convolution with designed filter
     end
@@ -87,7 +107,7 @@ for cc = 1:numel(depths)
     % Convert indexing to [x,y]
     [smax.y,smax.x] = ind2sub(size(zz),max2.idx);
     max2.pwrOrig = max2.pwr; % Create unfiltered max2.pwr var
-    
+  %%  
     try
         %% Convert to 3-D referencing
         
@@ -109,12 +129,28 @@ for cc = 1:numel(depths)
             max2.idx = max2.idx(pInd); max2.pwr = max2.pwr(pInd);
         end
         
-        % Limit search to pre-selected peaks
+        %% Limit search to pre-selected peaks
         % Note: Perhaps may be useful to interpolate through identified layers?
         if cfg.pkselect == 1
-            iInd = find(abs(ints(:,3)-depth) < cfg.pktolm,1); % Find closest z within 5 m depth
-            %rInd = find(abs(int.y-ints(iInd,1))<cfg.rThresh*dy & abs(int.x-ints(iInd,2))<cfg.rThresh*dx);
-            rInd = find(abs(int.y-ints(iInd,1))<cfg.rThresh*dy); % Only use layers within range threshold
+            iIndx = find(abs(intsx(:,3)-depth) < cfg.pktolm,1); % Find closest z within tolerance
+            iIndy = find(abs(intsy(:,3)-depth) < cfg.pktolm,1); % Find closest z within tolerance
+            
+            switch deployment % THIS IS TEMPORARY
+                case 1
+                    rInd = find(abs(int.y-intsy(iIndy,1))<cfg.rThresh*dy & abs(int.x-intsy(iIndy,2))<cfg.rThresh*dx);
+                case {2,3}
+                    try rIndx = find(abs(int.x-intsx(iIndx,1))<cfg.rThresh*dx); end; % Only use layers within range threshold
+                    try rIndy = find(abs(int.y-intsy(iIndy,1))<cfg.rThresh*dy); end % Only use layers within range threshold
+                    if exist('rIndx','var') && exist('rIndy','var')
+                        rInd = intersect(rIndx,rIndy);
+                    elseif exist('rIndx','var') && ~exist('rIndy','var')
+                        rInd = rIndx;
+                    elseif ~exist('rIndx','var') && exist('rIndy','var')
+                        rInd = rIndy;
+                    elseif ~exist('rIndx','var') && ~exist('rIndy','var')
+                        rInd = [];
+                    end
+            end
             int.x = int.x(rInd); int.y = int.y(rInd);
             int.r = int.r(rInd); int.theta = int.theta(rInd); int.phi = int.phi(rInd); 
             max2.idx = max2.idx(rInd); max2.pwr = max2.pwr(rInd); 
@@ -146,7 +182,7 @@ for cc = 1:numel(depths)
         lyr.phi(cc) = int.phi(max2.mloc);
         
         %% Plotting fancies
-        plotimgdepth_gland(xx,yy,db(zz));
+        plotimgdepth_gland(xx,yy,zz);
         plot3(0,0,1,'kp')
         plot3(xx(smax.x),yy(smax.y),max2.pwrOrig,'k.','markerSize',5)
         plot3(int.x,int.y,max2.pwr,'k.','markerSize',20)
@@ -158,6 +194,8 @@ for cc = 1:numel(depths)
         int.r = NaN; int.theta = NaN; int.phi = NaN;
         lyr.x(cc) = NaN; lyr.y(cc) = NaN; lyr.z(cc) = int.z;
         lyr.r(cc) = NaN; lyr.theta(cc) = NaN; lyr.phi(cc) = NaN;
+        plotimgdepth_gland(xx,yy,zz);
+        title(['2D depth profile at Depth: ', num2str(depth) ,'m at Date/Time: ', datestr(dateStamp)])
     end
     
 end
@@ -172,3 +210,22 @@ set(0,'DefaultFigureVisible','on')
 
 fig = plotlayers_gland(plane.x0,plane.y0,plane.z0,pxy,ppr);
 title(['3D layer profile at at Date/Time: ', datestr(dateStamp)])
+zLim = -350;
+xlim([zLim/2 -zLim/2])
+ylim([zLim/2 -zLim/2])
+zlim([zLim 0])
+
+%% Export figures
+
+if cfg.doSave
+    % Create and cd to folder
+    fileLoc = '~/Google Drive/Academic/papers/paper3/figs/3d/';
+    %fileLoc = '~/Downloads';
+    try
+        cd(fileLoc);
+    catch
+        mkdir(fileLoc); cd(fileLoc);
+    end
+    set(fig,'color','w')
+    export_fig(fig,strcat(fileIn(9:16),'_3d.png'),'-m2');
+end
