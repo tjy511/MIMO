@@ -234,7 +234,7 @@ for fileNum = bstart:leapFrog:size(tsList,1)
     fileDate = datestr(dateStamp,'yyyymmdd-HHMM');
     fileName = strcat('array2d_', fileDate, '.mat');
     fileNameFull = strcat(fig_dir,fileName);
-    save(fileNameFull);
+    save(fileNameFull,'vdat','PP_pix','Rs','xxPix','yyPix');
     disp(['Saved data results as file: ', fileName])
     end
 end
