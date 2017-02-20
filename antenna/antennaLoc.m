@@ -1,5 +1,5 @@
 function [varargout] = antennaLoc(type,varargin)
-% antennaLoc(txrx,quadrant,off,dPhy,doPlot)
+% antennaLoc(type,txrx,dPhy,quadrant,off,doPlot)
 %
 % Script to set location of antennas.
 %
@@ -73,7 +73,7 @@ switch type
         txrx = varargin{1};
         dPhy = varargin{2};
         quadrant = 0; 
-        off = [0 0]; 
+        off = 0; 
         if nargin == 4
             doPlot = varargin{3};
         else

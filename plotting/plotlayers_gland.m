@@ -45,8 +45,8 @@ xlim([z0(end)/2 -z0(end)/2])
 ylim([z0(end)/2 -z0(end)/2])
 zlim([z0(end)-50 0])
 view(-15,15)
-xlabel('x-position (m)'); 
-ylabel('y-position (m)'); 
+xlabel('Along-range [m]'); 
+ylabel('Cross-range [m]'); 
 zlabel('Depth (m)');
 
 if numel(size(ppr)) == 3
@@ -56,7 +56,7 @@ if numel(size(ppr)) == 3
 else
     %legend.Label.String = 'Depth (m)';
     %caxis([z0(end) 0])
-    legend.Label.String = 'Degrees';
+    legend.Label.String = sprintf('Slope [%c]', char(176));
     colormap(jet)
     caxis([4 15])
 end

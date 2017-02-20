@@ -8,18 +8,18 @@ ccc
 %% Input parameters
 
 % Antenna parameters
-ant.type = 'isotropic'; % 'bowtie' 'helix' 'pencil' 'isotropic' 'dipole'
+ant.type = 'bowtie'; % 'bowtie' 'helix' 'pencil' 'isotropic' 'dipole'
 thetaStA = 0; % Steering angle
 freqs = 3e8; % Wave frequency [Hz]
 c = 3e8;%/sqrt(3.18); % Wave speed [m/s] (Eq. 6.2 of Hubbard & Glasser 2005)
 
 % Antenna locations
-ant.loc = 'virtual'; % 'store1' 'real' 'virtual'
-txrx = [32 1]; % Default: [8 8]
+ant.loc = 'store1'; % 'store1' 'real' 'virtual'
+txrx = [8 8]; % Default: [8 8]
 quadrant = 4; % Default: 4
 off = [2.49 -2.49]; % Default: [2.49 -2.49]
 dPhy = 1 * c/3e8; %3 * c/3e8; % Default: 0.83
-ampWeight = 'binomial'; % 'uniform' 'triangular' 'binomial'
+ampWeight = 'uniform'; % 'uniform' 'triangular' 'binomial'
 
 doPlot = 1;
 doHPBW = 1;
@@ -39,7 +39,7 @@ end
 switch ampWeight
     
     case 'uniform'
-        w = ones(1,txrx(1)); % Weights
+        w = ones(1,txrx(1)*txrx(2)); % Weights
     case 'triangular'
         if mod(txrx(1),2) == 0
             w = interp1([1 midpt txrx(1)],[lowpt,highpt,highpt,lowpt],1:txrx(1));
@@ -100,7 +100,7 @@ end
 
 if doSave
     % Create and cd to folder
-    fileLoc = strcat('~/Google Drive/Academic/papers/paper3/figs/wavelength/',...
+    fileLoc = strcat('~/Google Drive/Academic/papers/paper3/figs/',...
         num2str(txrx(1)),'-',num2str(txrx(2)),'_',num2str(dPhy*1000));
     try
         cd(fileLoc);

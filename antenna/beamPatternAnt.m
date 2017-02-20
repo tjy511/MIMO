@@ -16,15 +16,15 @@ c = 3e8; %/sqrt(3.18); % Wave speed [m/s] (Eq. 6.2 of Hubbard & Glasser 2005)
 
 % Antenna locations
 ant.loc = 'virtual'; % 'store1' 'other'
-ant.wid = [0.0301 0.0075 0.00333 0.0014868];
-txrx = [32 1]; % Default: [8 8]
+ant.wid = 0.00333;
+txrx = [16 1]; % Default: [8 8]
 quadrant = 4; % Default: 4
 off = [2.49 -2.49]; % Default: [2.49 -2.49]
 dPhy = 1; % Default: 0.83 % NOTE that dPhy is half of the resulting element separation
 
-doPlot = 0; 
+doPlot = 1; 
 doHPBW = 1; 
-doSave = 1;
+doSave = 0;
 
 %% Calculate array geometry and array factor for different frequencies
 for ii = 1:length(ant.wid)
@@ -55,14 +55,14 @@ for ii = 1:length(ant.wid)
 end
 
 %% Plot the array pattern for various frequencies 
-WComb = [W(1,:); WWeight]; 
+WComb = [ant.RE; W(1,:); WWeight]; 
 [fig_w,ax_w,pp] = plotBPRectangular(db(WComb(:,901:2701),'power'), thetaScA(:,901:2701), 50,[nan ant.wid]);%, txrx); % Unweighted
 fig_w = gcf; 
 set(fig_w,'units','normalized','position',[0 0 1 1/2])
 
-set(pp(1),'color','k','lineStyle',':')
-%set(pp(2),'color', [51 153 255]/255,'lineStyle',':')
-%set(pp(3),'color', [0 76 153]/255,'lineWidth',2)
+set(pp(1),'color','k','lineStyle','--')
+set(pp(2),'color', [51 153 255]/255,'lineStyle',':')
+set(pp(3),'color', [0 76 153]/255,'lineWidth',2)
 
 %% Calculate HPBW
 

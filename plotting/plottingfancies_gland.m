@@ -4,11 +4,18 @@
 % 08.12.2015
 
 %% Load imagery file
-load('array2d_20140506-1813_attended.mat')
+load('array2d_20150703-1221.mat')
+% array2d_20140506-1813.mat
+% array2d_20140726-1727.mat
+% array2d_20150703-1221.mat
 
 %% Set depth parameters
-depth = 600;
-depths = 590:620;
+depth = 635;%600;
+depths = 630:650;%590:620;
+
+% Correction to match Rs
+depth = depth-10+1;
+depths = depths-10+1; 
 
 %% Plot 2D imagery
 
@@ -45,11 +52,9 @@ surf(x,y,v,'EdgeColor','none')
 colormap(jet)
 
 %% Simple layer plot (post-smooth)
-
+clear power 
 % SR image post processing method
-counter = 0;
-depths = 590:620;
-%depth = 600;
+counter = 0; tt = 1;
 for ii = depths
     counter = counter + 1;
     vv = peakConvol(imgPlane(:,:,ii),4);
@@ -70,7 +75,7 @@ ylabel('y-position (m)')
 set(gcf, 'Position', get(0,'Screensize')); % Maximize figure
 
 %% Contour plot
-
+clear v
 % Store the matrices x, y, z, and v from the data set.
 x = 1:100;
 y = x;
@@ -92,9 +97,9 @@ legend = colorbar;
 campos([0,-20,7])
 
 %% Isosurface plot
-
+thresh = -25; 
 figure, hold on
-p = patch(isosurface(x,y,z,v,-60));
+p = patch(isosurface(x,y,z,v,thresh));
 isonormals(x,y,z,v,p)
 p.FaceColor = [0.5 0.5 0.5];
 p.EdgeColor = 'none';

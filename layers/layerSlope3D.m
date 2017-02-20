@@ -5,7 +5,7 @@
 
 %% Load imagery file and associated parameters
 close all
-deployment = 1; % 1 2 3
+deployment = 2; % 1 2 3
 switch deployment
     case 1
         fileIn = 'array2d_20140506-1813.mat';
@@ -15,10 +15,10 @@ switch deployment
         cfg.rThresh = 10; % Search range for pkselect (m in x-y direction); 
     case 2
         fileIn = 'array2d_20140726-1727.mat';
-        cfg.phiLim = [90 180+45]; % Limits for phi (degrees) from x-axis vector [225 315]
-        cfg.pkthresh = -52.5; % dB threshold level for peaks
-        cfg.pktolm = 10; % 2D tolerance for peaks (bins in z-direction)
-        cfg.rThresh = 10; % Search range for pkselect (bins in x-y direction); 
+        cfg.phiLim = [90 180]; % Limits for phi (degrees) from x-axis vector
+        cfg.pkthresh = -60; % dB threshold level for peaks
+        cfg.pktolm = 20; % 2D tolerance for peaks (bins in z-direction)
+        cfg.rThresh = 15; % Search range for pkselect (bins in x-y direction); 
     case 3
         fileIn = 'array2d_20150703-1221.mat';
         cfg.phiLim = [180-45 180+90]; % Limits for phi (degrees) from x-axis vector [225 315]
@@ -49,8 +49,8 @@ cfg.pkprom = 0; % Filter by prominence threshold
 %cfg.rThresh = 8; % Search range for pkselect (bins in x-y direction); 
 
 % Parameters for plotting
-cfg.doPlot = 0; % Turn on intermediate plotting
-cfg.doSave = 0; % Turn on figure exporting
+cfg.doPlot = 1; % Turn on intermediate plotting
+cfg.doSave = 1; % Turn on figure exporting
 
 % Activate config
 if cfg.pkselect == 1
@@ -200,6 +200,17 @@ for cc = 1:numel(depths)
     
 end
 
+%% Manually remove odd layers
+
+switch deployment
+    case 1
+        exclude = 13;
+    case 2
+        
+    case 3
+end
+lyr.x(exclude) = NaN; 
+
 %% Visualise layer in 3 dimensions
 
 plane.x0 = lyr.x;
@@ -208,18 +219,23 @@ plane.z0 = lyr.z;
 
 set(0,'DefaultFigureVisible','on')
 
-fig = plotlayers_gland(plane.x0,plane.y0,plane.z0,pxy,ppr);
+%fig = plotlayers_gland(plane.x0,plane.y0,plane.z0,pxy,ppr);
+fig = plotlayers_gland(plane.x0,plane.y0,plane.z0,pxy,lyr.theta);
 title(['3D layer profile at at Date/Time: ', datestr(dateStamp)])
-zLim = -350;
+zLim = -325;
 xlim([zLim/2 -zLim/2])
 ylim([zLim/2 -zLim/2])
 zlim([zLim 0])
+
+%% Stats
+nanmean(lyr.phi)
+nanmedian(lyr.phi)
 
 %% Export figures
 
 if cfg.doSave
     % Create and cd to folder
-    fileLoc = '~/Google Drive/Academic/papers/paper3/figs/3d/';
+    fileLoc = '~/Google Drive/Academic/papers/paper3/figs/processing/3d/';
     %fileLoc = '~/Downloads';
     try
         cd(fileLoc);

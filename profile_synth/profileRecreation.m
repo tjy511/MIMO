@@ -1,4 +1,4 @@
-function profile_recreation(antSelect,txrx,dPhy,sigma)
+function [fig_prof2d,hh] = profileRecreation(cfgi)
 
 % Script to test sensitivities of parameters to 2D power return
 %
@@ -8,54 +8,43 @@ function profile_recreation(antSelect,txrx,dPhy,sigma)
 % TJ Young
 % 07 December 2016
 
-%% Parameters
-
-% Depth profile
-N = -100; % Noise floor level [dBV]
-Al = -40; % Internal reflector reflectivity [dBV]
-Ab = -20; % Bed reflector reflectivity [dBV]
-B = 600; % Depth of bed reflector [m]
-
-% Backscatter
-scatterType = 'gaussian'; % 'gaussian' 'cosine'
-%sigma = 0.5; % Scattering factor (standard bell curve = 1) [degrees]
-
-% Antenna location
-antLoc = 'store1'; % 'store1' 'real' 'virtual'
-%txrx = [16 1]; % Default: [8 8]
-quadrant = 2; % Default: 2
-off = [2.49 -2.49]; % Default: [2.49 -2.49] [m]
-beamWidth = 1; % Variable for beam width (default = 1)
-%dPhy = 1; % Default: 0.83 [m]
-
-% Beam forming
-freq = 3e8; % MIMO frequency [Hz]
-thetaStA = -30:30; % Steering angle range [degrees]
-%antSelect = 'bowtie'; % Antenna selection ('isotropic' 'pencil' 'bowtie' 'helix' 'dipole')
-c = 3e8/sqrt(3.1); % Speed of wave propagation (3e8/sqrt(3.18) in ice);
-weight = 1; % Weighting beam with array factor [binary]
-
-% Switches
-doConvolution = 1;
-doPlot = 1;
-doSave = 1;
+%% Load processing settings
+global cfg
+cfg = mimo_config_default; % Load default configuration
+if nargin == 1
+    % overwrite defaults
+    fieldnames = fields(cfgi);
+    fieldlist = [];
+    for ii = 1:length(fieldnames)
+        thisfield = fieldnames{ii};
+        cfg = setfield(cfg,thisfield,getfield(cfgi,thisfield));
+        fieldlist = [fieldlist ', ' thisfield];
+    end
+    fieldlist = fieldlist(3:end);
+    cfg.notes = [cfg.notes '. User modified fields: ' fieldlist '.'];
+end
 
 %% Create pixel distribution
 
 % Create Gaussian distribution of power return
-
 px = -90:1:90; % Slope angle
-switch scatterType
+switch cfg.scatterType
     case 'gaussian'
-        py = normpdf(px,0,sigma*(68.27/2)/(10/9));
+        % Internal
+        py = normpdf(px,0,cfg.sigma*(68.27/2)/(10/9));
         py_min = min(py);
         py_max = max(py);
         py = (py-py_min) .* (1/(py_max-py_min)); % Power return scaled to dBV
+        % Basal
+        pybed = normpdf(px,0,1*(68.27/2)/(10/9));
+        pybed_min = min(pybed);
+        pybed_max = max(pybed);
+        pybed = (pybed-pybed_min) .* (1/(pybed_max-pybed_min)); % Power return scaled to dBV
     case 'cosine'
         py = cosd(px);
 end
 
-% Plotting fancies
+% Plotting fancies c
 fig_pwr = figure;
 plot(px,py)
 xlim([px(1) px(end)])
@@ -68,23 +57,23 @@ ylabel('Power return [dBV]')
 depths = 0:1:700; widths = -400:1:400;
 xx = repmat(widths,length(depths),1);
 yy = repmat(depths',1,length(widths));
-rz = repmat(db2mag(N),size(xx));
+rz = repmat(db2mag(cfg.noiseFloor),size(xx));
 zz_reflect = nan(size(rz)); % Reflectivity of pixels
 pRESLoc = [0 0 0]; % Location of radar on profile
 
 % Add internal layers to profile
-[rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,100,Al,'flat');
-[rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,200,Al,'slope',2);
-[rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,300,Al,'slope',5);
-[rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,400,Al,'slope',10);
+[rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,100,cfg.intLevel,'flat');
+[rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,200,cfg.intLevel,'slope',2);
+[rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,300,cfg.intLevel,'slope',5);
+[rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,400,cfg.intLevel,'slope',10);
 
 % Add bed layer to profile
-[rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,B,Ab,'sine',[pi 10],'addBed');
+[rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,cfg.bedDepth,cfg.bedLevel,'sine',cfg.bedRoughness,'addHill','addBed',cfg.bedMountain);
 
 % Add noise to profile
-if ~isnan(N)
+if ~isnan(cfg.noiseFloor)
     noise = randn(size(rz));
-    noise = 100 .* noise .* db2mag(N);
+    noise = 100 .* noise .* db2mag(cfg.noiseFloor);
     rz = rz+noise;
 end
 
@@ -100,36 +89,36 @@ zz_r = sqrt(xx.^2 + yy.^2); % Distance of pixels from radar
 zz_theta = asind(xx./zz_r); % Angle of pixels from radar
 
 % Calculate virtual antenna locations
-switch antLoc
+switch cfg.antSetup
     case 'store1'
-        [ve,fig_ant] = antennaLoc(antLoc,doPlot);
+        [ve,fig_ant] = antennaLoc(cfg.antSetup,cfg.doPlot);
     case 'real'
-        [ve,fig_ant] = antennaLoc(antLoc,txrx,dPhy,quadrant,off,doPlot);
+        [ve,fig_ant] = antennaLoc(cfg.antSetup,cfg.txrx,cfg.dPhy,cfg.quadrant,cfg.off,cfg.doPlot);
     case 'virtual'
-        [ve,fig_ant] = antennaLoc(antLoc,txrx,dPhy,doPlot);
+        [ve,fig_ant] = antennaLoc(cfg.antSetup,cfg.txrx,cfg.dPhy,cfg.doPlot);
 end
-
 xPos = ve(:,1); yPos = ve(:,2); % Virtual element coordinates
-w = ones(1,size(ve,1))/size(ve,1); % Calculate weights
+w = ones(1,size(ve,1))/size(ve,1); % Calculate cfg.weights
 
 % Find cells through all depths
 clear R_sum R_sum_norm
-R_sum = nan(length(thetaStA),length(depths));
+R_sum = nan(length(cfg.thetaStA),length(depths));
 
 % Loop through steering angles
-for ii = 1:length(thetaStA)
+for ii = 1:length(cfg.thetaStA)
     
     % Load antenna radiation pattern
-    [thetaScA,~,antRE] = antennaBP(antSelect,0,beamWidth);
+    [thetaScA,~,antRE] = antennaBP(cfg.antSelect,0,cfg.beamwidth);
     
     % Load array factor
-    W = arrayFactor(xPos,yPos,w,freq,c,thetaScA,0,thetaStA(ii)); % Unweighted
-    switch weight
+    W = arrayFactor(xPos,yPos,w,cfg.freq,cfg.c,thetaScA,0,cfg.thetaStA(ii)); % Uncfg.weighted
+    switch cfg.weight
         case 0
-            arrRE = antRE; % Unweighted array factor
+            arrRE = antRE; % Uncfg.weighted array factor
         case 1
             arrRE = W' .* antRE; % Weight array factor with antenna radiation pattern
     end
+    arrRE = fliplr(arrRE); % Array facing downwards, need to flip array without flipping angle
     
     % Loop through depths
     for jj = 1:length(depths)
@@ -156,8 +145,13 @@ for ii = 1:length(thetaStA)
             
             % Weight identified pixels to layer reflectivity
             if ~isnan(R_pix(kk,4))
-                [~,wref_idx] = min(abs(px-R_pix(kk,3)));
-                R_wref(kk,1) = py(wref_idx);
+                if jj < cfg.bedDepth-10 % Separate bed from layer reflectivity
+                    [~,wref_idx] = min(abs(px-R_pix(kk,3)));
+                    R_wref(kk,1) = py(wref_idx);
+                else
+                    [~,wref_idx] = min(abs(px-R_pix(kk,3)));
+                    R_wref(kk,1) = pybed(wref_idx);
+                end
             end
         end
         
@@ -165,26 +159,26 @@ for ii = 1:length(thetaStA)
         R_sum(ii,jj) = sum(R_pix(:,1) .* R_wrad(:,1).^2 .* R_wref(:,1));
     end
     
-    disp(['Processed power return at steering angle: ',num2str(thetaStA(ii)),' degrees'])
+    disp(['Processed power return at steering angle: ',num2str(cfg.thetaStA(ii)),' degrees'])
 end
 
 %% Plotting fancies
 
 % Plot profile return distribution (1D)
 fig_prof1d = figure;
-plot(depths,mag2db(R_sum(ceil(length(thetaStA)/2),:)))
+plot(depths,mag2db(R_sum(ceil(length(cfg.thetaStA)/2),:)))
 ylim([-100 20])
 xlabel('Depth [m]')
 ylabel('Amplitude return [dBV]')
 
 % Set up 2D grid for profile distribution
-[rr,tt] = meshgrid(-depths,linspace(min(thetaStA),max(thetaStA),length(thetaStA)));
+[rr,tt] = meshgrid(-depths,linspace(min(cfg.thetaStA),max(cfg.thetaStA),length(cfg.thetaStA)));
 rx = rr.*sind(tt);
 ry = rr.*cosd(tt);
 rz = R_sum;
 
 % Filter profile
-if doConvolution
+if cfg.doConvolution
     disp('Filtering profile with 2D convolution...')
     ftype = 'gaussian'; fsize = 7; fsigma = 1; fwindow = 2;
     filt = (fspecial(ftype,fsize,fsigma)); % Guassian lowpass filter 
@@ -194,8 +188,9 @@ if doConvolution
 end
 
 % Plot profile return distribution (2D)
-fig_prof2d = plotimgprofile_gland(rx,ry,rz);
+[fig_prof2d,hh] = plotimgprofile_gland(rx,ry,rz);
 axis equal
+view(0,+90)
 xlim([round(min(min(rx))-1,-2) round(max(max(rx))+1,-2)])
 ylim([min(min(ry)) 0])
 caxis([-120 20])
@@ -204,21 +199,18 @@ legend = colorbar('Ticks',[-120 -100 -80 -60 -40 -20 0 20]);
 
 %% Saving fancies
 
-if doSave
-    % Create and cd to folder
-    %fileLoc = strcat('~/Google Drive/Academic/papers/paper3/figs/wavelength/',...
-    %    num2str(txrx(1)),'-',num2str(txrx(2)),'_',num2str(dPhy*1000));
-    fileLoc = '~/Downloads';
+if cfg.doSave
     try
-        cd(fileLoc);
+        %cd(cfg.fileLoc);
     catch
-        mkdir(fileLoc); cd(fileLoc);
+        %mkdir(cfg.fileLoc); cd(cfg.fileLoc);
     end
     set([fig_prof1d fig_prof2d],'color','w')
-    export_fig(fig_prof1d,strcat(antSelect,'_PR_1d.png'),'-m2');
-    %export_fig(fig_prof2d,strcat(antSelect,'_PR_2d.png'),'-m2');
-    export_fig(fig_prof2d,strcat(antSelect,'_',num2str(sigma),'_',num2str(dPhy),'_PR_2d.png'),'-m2');
-    if doPlot
+    export_fig(fig_prof1d,strcat(cfg.antSelect,'_PR_1d.png'),'-m2');
+    %export_fig(fig_prof2d,strcat(cfg.antSelect,'_PR_2d.png'),'-m2');
+    %export_fig(fig_prof2d,strcat(cfg.antSelect,'_',num2str(cfg.beamwidth),'_',num2str(cfg.dPhy),'_PR_2d.png'),'-m2');
+    export_fig(fig_prof2d,strcat(cfg.antSelect,'_',num2str(cfg.txrx(1)),'-',num2str(cfg.txrx(2)),'_',num2str(cfg.dPhy),'_PR_2d.png'),'-m2');
+    if cfg.doPlot
         set([fig_pwr fig_profsynth],'color','w')
         export_fig(fig_pwr,'PD_pixel.png','-m2')
         export_fig(fig_profsynth,'PS.png','-m2');

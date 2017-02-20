@@ -9,30 +9,32 @@ hp_bw = hpbw(theta,RE);
 
 %% Experiment 1
 
-profile_recreation('pencil',[32 1],1,0.1205)
-profile_recreation('pencil',[32 1],1,0.0301)
-profile_recreation('pencil',[32 1],1,0.0075)
-profile_recreation('pencil',[32 1],1,0.00333)
-profile_recreation('pencil',[32 1],1,0.00148675)
-
+[fig1,h1] = profileRecreation(mimo_config_sim11);
+[fig2,h2] = profileRecreation(mimo_config_sim12);
+[fig3,h3] = profileRecreation(mimo_config_sim13);
+[fig4,h4] = profileRecreation(mimo_config_sim14);
 %% Experiment 2
-profile_recreation('pencil',[32 1],1/4,0.00333)
-profile_recreation('pencil',[32 1],1/2,0.00333)
-profile_recreation('pencil',[32 1],1,0.00333)
-profile_recreation('pencil',[32 1],2,0.00333)
 
+[fig1,h1] = profileRecreation(mimo_config_sim21);
+[fig2,h2] = profileRecreation(mimo_config_sim22);
+[fig3,h3] = profileRecreation(mimo_config_sim23);
+[fig4,h4] = profileRecreation(mimo_config_sim24);
 
 %% Experiment 3
 
-profile_recreation('pencil',[32 1],1,0.00333)
-profile_recreation('pencil',[24 1],1,0.00333)
-profile_recreation('pencil',[16 1],1,0.00333)
-profile_recreation('pencil',[8 1],1,0.00333)
-profile_recreation('pencil',[8 8],1,0.00333)
+[fig1,h1] = profileRecreation(mimo_config_sim31);
+[fig2,h2] = profileRecreation(mimo_config_sim32);
+[fig3,h3] = profileRecreation(mimo_config_sim33);
+[fig4,h4] = profileRecreation(mimo_config_sim34);
 
 %% Experiment 4
 
-profile_recreation('isotropic',[32 1],1,0.00333)
-profile_recreation('pencil',[32 1],1,0.00333)
-profile_recreation('bowtie',[32 1],1,0.00333)
-profile_recreation('helix',[32 1],1,0.00333)
+[fig1,h1] = profileRecreation(mimo_config_sim41);
+[fig2,h2] = profileRecreation(mimo_config_sim42);
+[fig3,h3] = profileRecreation(mimo_config_sim43);
+[fig4,h4] = profileRecreation(mimo_config_sim44);
+
+%% Simulation of radar setup
+
+% Make sure antLoc in script is set to store1
+profile_recreation('bowtie',[8 8],1,1); % Last 2 terms are dummy
