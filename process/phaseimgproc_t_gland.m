@@ -223,6 +223,7 @@ for fileNum = bstart:leapFrog:size(tsList,1)
         %         %close gcf
         % %    end
         
+        vdat.dphy = dphy;
         imgPlane(:,:,ss)=abs(PP_pix);
         yyPix(ss,:)=yPix;
         xxPix(ss,:)=xPix;

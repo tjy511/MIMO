@@ -59,11 +59,12 @@ end
 
 % Parameters for depths
 %depths = [25:25:400];
-depths = int1.y(:,3);
+depths = int1.y(:,3)';
 
 %% Run through layers
 
 clear pr pxy ppr int iIndx iIndy rIndx rIndy rInd
+%for cc = 1
 for cc = 1:numel(depths)
     
     %% Establish structure
@@ -102,9 +103,44 @@ for cc = 1:numel(depths)
     max2.std = std(max2.pwr);
     
     % Convert indexing to [x,y]
-    [smax.y,smax.x] = ind2sub(size(zz),max2.idx);
+    [smax.y,smax.x] = ind2sub(size(zz),max2.idx); % Ordered peaks in surface
     max2.pwrOrig = max2.pwr; % Create unfiltered max2.pwr var
     
+    % 3-dimensional location in Cartesian
+    int2.x = xx(smax.x);
+    int2.y = yy(smax.y);
+    int2.z = -depth;
+    
+    % 3-dimensional location in Polar
+    [int2.r,int2.theta,int2.phi] = cart2sph(int2.x,int2.y,int2.z);
+    
+    % Amplitude of peaks
+    int2.pwr = max2.pwr'; 
+    
+    %% Various filtering of peaks
+    
+    % Limit search to specified range
+    
+    % Find nearest depth range
+    [~,tmpx] = min(abs(depth-int1.x(:,3)));
+    [~,tmpy] = min(abs(depth-int1.y(:,3)));
+    int1.ref(cc,:) = [int1.y(tmpy,1) int1.x(tmpx,2) mean([int1.y(tmpy,3) int1.x(tmpx,3)])];
+    
+    % Plot layers
+    plotimgdepth_gland(xx,yy,zz)
+    plot3(int2.x,int2.y,db(int2.pwr),'k.', 'markerSize',10)
+    
+    % Find biggest peak
+    [~,idx] = max(int2.pwr); 
+    
+    lyr.x(cc) = int2.x(idx); lyr.y(cc) = int2.y(idx); lyr.z(cc) = int2.z(idx);
+    lyr.r(cc) = int2.r(idx); lyr.theta(cc) = int2.theta(idx); lyr.phi(cc) = int2.phi(idx); 
+    
+    
+end
+
+    %% SCRATCH
+  %%  
     try
         %% Convert to 3-D referencing
         

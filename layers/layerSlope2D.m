@@ -6,29 +6,35 @@
 %% Config parameters
 
 % File and dimensions
-fileIn = 'array2d_20140506-1813.mat';
-% array2d_20140506-1813.mat
-% array2d_20140726-1727.mat
-% array2d_20150703-1221.mat
-cfg.slice = 'yy'; % 'xx' 'yy'
+deployment = 2; % 1 2 3 
+cfg.slice = 'xx'; % 'xx' 'yy'
 
 % Filter
 cfg.filter = 1; % Switch to filter/smooth profile
 cfg.ftype = 'gaussian'; % Rotationally symmetric Gaussian lowpass filter
-cfg.fsize = 7; % Filter size
-cfg.fsigma = 1; % Standard deviation threshold
-cfg.fwindow = 2; % Window size in convolution
+cfg.fparam = [7 1 2]; % Filter size
 
 % Peak identification
-thresh = -50;
 threshx = 3; % +/- bins in range from curve
 
 % Export
 doExport = 1; % Export selected points to .mat file
 doSave = 1;
 
-%% 0. Load imagery file
-load(fileIn)
+%% 0. Load imagery file and associated parameters
+close all
+switch deployment
+    case 1
+        fileIn = 'array2d_20140506-1813.mat';
+        thresh = -50;
+    case 2
+        fileIn = 'array2d_20140726-1727.mat';
+        thresh = -60;
+    case 3
+        fileIn = 'array2d_20150703-1221.mat';
+        thresh = -60;
+end
+load(fileIn,'xxPix','yyPix','pp_slicex','pp_slicey','Rs','dateStamp','R')
 
 % Define 3-dimensional variables
 xx = xxPix;%repmat([-50:49],641,1);
@@ -45,10 +51,7 @@ fig1 = plotimgprofile_gland(xx,yy,zz);
 
 %% 1. Filter profile
 if cfg.filter
-    filt = (fspecial(cfg.ftype,cfg.fsize,cfg.fsigma)); % Guassian lowpass filter 
-    thres = (max([min(max(zz,[],1))  min(max(zz,[],2))])) ;
-    zz = medfilt2(zz,[cfg.fwindow,cfg.fwindow]); % Median filtering in 2 directions
-    zz = conv2(zz,filt,'same'); % 2-D convolution with designed filter
+    zz = pkConvol(zz,cfg.ftype,cfg.fparam);
 end
 
 %% 2. Obtain peaks in 2D
@@ -77,12 +80,6 @@ ibiy = interp1(iby,ibx,yy(:,1));
 for ii = 1:length(smax.x)
     int.select(ii) = abs(xx(smax.x(ii),smax.y(ii)) - ibiy(smax.x(ii))) < threshx;
 end
-fig2 = plotimgprofile_gland(xx,yy,zz);
-for ii = 1:length(int.select)
-    if int.select(ii) == 1
-        plot3(xx(smax.x(ii),smax.y(ii)),yy(smax.x(ii),smax.y(ii)),db(zmax(ii),'voltage'),'k.', 'markerSize',15)
-    end
-end
 
 %% 3. Identify slope of layers
 % Slope angle phi is dictated by the amount deviated from nadir.
@@ -102,24 +99,52 @@ elseif cfg.slice == 'yy';
     int.y = zeros(size(int.select)); % Location along y-axis
 end
 int.z = tmp.dep; % Location through depth
+int.p = zmax'; % Power of internal layers
 
 % 3-dimensional location in Polar
 [int.r,int.theta,int.phi] = cart2sph(int.x,int.y,int.z);
 
+% Subset picked slope
+intS.x = int.x(int.select);
+intS.y = int.y(int.select);
+intS.z = int.z(int.select);
+intS.r = int.r(int.select);
+intS.theta = int.theta(int.select);
+intS.phi = int.phi(int.select);
+intS.pow = int.p(int.select); 
+
+ints = [intS.x' intS.y' intS.z' intS.r' intS.theta' intS.phi' intS.pow'];
+ints = sortrows(ints,3);
+
+% Remove duplicate values at same depths
+uDepths = unique(ints(:,3)); 
+for ii = 1:length(uDepths)
+    ii = uDepths(ii);
+    disp(num2str(ii))
+    multIdx = find(ismember(ints(:,3),ii)); % Find multiple values of internal layer
+    if numel(multIdx) > 1 % If multiple values exist
+        disp(['   ',num2str(ii)])
+        [~,idx] = max(ints(multIdx,7));
+        multIdx(idx) = [];
+        ints(multIdx,:) = [];
+    end
+end
+
+%% Final product
+fig2 = plotimgprofile_gland(xx,yy,zz);
+for ii = 1:length(int.select)
+    if int.select(ii) == 1
+        if cfg.slice == 'xx'
+            plot3(ints(:,2),ints(:,3),db(ints(:,7),'voltage')-10,'k.', 'markerSize',8)
+        elseif cfg.slice == 'yy'
+            plot3(ints(:,1),ints(:,3),db(ints(:,7),'voltage')-10,'k.', 'markerSize',8)
+        end
+    end
+end
+
 %% Export picked slopes
 
 if doExport
-    % Subset picked slope
-    intS.x = int.x(int.select);
-    intS.y = int.y(int.select);
-    intS.z = int.z(int.select);
-    intS.r = int.r(int.select);
-    intS.theta = int.theta(int.select);
-    intS.phi = int.phi(int.select);
-    
-    ints = [intS.x' intS.y' intS.z' intS.r' intS.theta' intS.phi'];
-    ints = sortrows(ints,3);
-    
     startup
     fileOut = strcat('intSelect_',fileIn(9:16),cfg.slice(1));
     cd(strcat(rwd,'/results/mimo/'));
