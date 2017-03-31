@@ -19,6 +19,6 @@ view(0,-90)
 colormap(jet)
 caxis([-100 -20])
 legend = colorbar('Ticks',[-100 -80 -60 -40 -20]);
-legend.Label.String = 'dB (V_{rms})';
+legend.Label.String = 'dB (V_{RMS})';
 xlabel('Cross-range [m]')
 ylabel('Depth [m]')

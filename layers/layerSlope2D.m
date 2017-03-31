@@ -6,8 +6,8 @@
 %% Config parameters
 
 % File and dimensions
-deployment = 2; % 1 2 3 
-cfg.slice = 'xx'; % 'xx' 'yy'
+deployment = 3; % 1 2 3 
+cfg.slice = 'yy'; % 'xx' 'yy'
 
 % Filter
 cfg.filter = 1; % Switch to filter/smooth profile
@@ -16,9 +16,10 @@ cfg.fparam = [7 1 2]; % Filter size
 
 % Peak identification
 threshx = 3; % +/- bins in range from curve
+doPeak = 0; % Re-identify peaks
 
 % Export
-doExport = 1; % Export selected points to .mat file
+doExport = 0; % Export selected points to .mat file
 doSave = 1;
 
 %% 0. Load imagery file and associated parameters
@@ -56,6 +57,8 @@ end
 
 %% 2. Obtain peaks in 2D
 
+if doPeak
+
 % Identify 2D maxima
 [zmax,imax,~,~]= extrema2(zz);
 zmax = zmax(db(zmax) > thresh);
@@ -85,7 +88,6 @@ end
 % Slope angle phi is dictated by the amount deviated from nadir.
 
 % 3-dimensional location in Cartesian
-
 for ii = 1:length(int.select)
     tmp.pos(ii) = xx(smax.x(ii),smax.y(ii)); 
     tmp.dep(ii) = yy(smax.x(ii),smax.y(ii));
@@ -130,10 +132,14 @@ for ii = 1:length(uDepths)
     end
 end
 
+else
+    load(strcat('intSelect_',fileIn(9:16),cfg.slice(1),'.mat'));
+end
+
 %% Final product
 fig2 = plotimgprofile_gland(xx,yy,zz);
-for ii = 1:length(int.select)
-    if int.select(ii) == 1
+for ii = 1:length(ints)
+    if exist('ints','var')
         if cfg.slice == 'xx'
             plot3(ints(:,2),ints(:,3),db(ints(:,7),'voltage')-10,'k.', 'markerSize',8)
         elseif cfg.slice == 'yy'
@@ -141,6 +147,10 @@ for ii = 1:length(int.select)
         end
     end
 end
+axis equal
+axis([-400 400 0 700])
+
+set(fig2, 'Units','Normalized','Position', [0 0 1/3 1/3]);
 
 %% Export picked slopes
 
@@ -148,14 +158,14 @@ if doExport
     startup
     fileOut = strcat('intSelect_',fileIn(9:16),cfg.slice(1));
     cd(strcat(rwd,'/results/mimo/'));
+    save(fileOut,'ints');
 end
-save(fileOut,'ints');
 
 %% Export figures
 
 if doSave
     % Create and cd to folder
-    fileLoc = '~/Google Drive/Academic/papers/paper3/figs/2d/';
+    fileLoc = '~/Google Drive/Academic/papers/paper3/figs/processing/2d/';
     %fileLoc = '~/Downloads';
     try
         cd(fileLoc);
@@ -164,5 +174,5 @@ if doSave
     end
     set([fig1 fig2],'color','w')
     export_fig(fig1,strcat(fileIn(9:16),'_slice',cfg.slice(1),'_orig.png'),'-m2');
-    export_fig(fig2,strcat(fileIn(9:16),'_slice',cfg.slice(1),'_layers_select.png'),'-m2');
+    export_fig(fig2,strcat(fileIn(9:16),'_slice',cfg.slice(1),'_layers_select.png'),'-m6');
 end

@@ -130,8 +130,8 @@ end
 
 %legend(axRectangular, 'show','Location','NorthEast')
 if exist('variable','var')
-legend(axRectangular,cellfun(@num2str, num2cell(variable), 'UniformOutput', false),...
-    'Location','NorthEast');
+%legend(axRectangular,cellfun(@num2str, num2cell(variable), 'UniformOutput', false),...
+%    'Location','NorthEast');
 end
 
 %set(bpFig,'position',[500 200 540 600])

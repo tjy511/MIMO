@@ -23,6 +23,7 @@ switch select
     case 'flat'
         param = []; % Dummy parameter
         idx = find(yy(:,1) == L); % Find pixels at reflector depth
+        idx = [idx-1 idx idx+1]; % Make layer thicker
         zz(idx,:) = db2mag(A); % Change value of pixels to layer reflectivity
         zz_reflect(idx,:) = 0; % Assigns flat reflector (0 degrees) to ref array
         
@@ -31,9 +32,12 @@ switch select
         m = tand(md); % Convert to slope format
         lSlope = m .* xx(1,:) + L; % Assigns sloped reflector
         [~,idx] = min(abs(bsxfun(@minus,yy,lSlope))); % Find nearest pixels to reflector depth
+        
         for ii = 1:length(idx)
             zz(idx(ii),ii) = db2mag(A); %  Change value of pixels to layer reflectivity
+            zz(idx(ii)-1,ii) = db2mag(A); zz(idx(ii)+1,ii) = db2mag(A);
             zz_reflect(idx(ii),ii) = -md; % Assigns slope value to ref array
+            zz_reflect(idx(ii)-1,ii) = -md; zz_reflect(idx(ii)+1,ii) = -md; 
         end
         
     case 'sine'

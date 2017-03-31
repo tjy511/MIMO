@@ -6,25 +6,25 @@
 % 05 December 2016
 
 %% Input parameters
-
+ccc
 % Antenna parameters
 %ant.type = antType;
-ant.type = 'pencil'; % 'bowtie' 'helix' 'pencil' 'isotropic' 'dipole'
+ant.type = 'bowtie'; % 'bowtie' 'helix' 'pencil' 'isotropic' 'dipole'
 thetaStA = 0; % Steering angle
 freqs = 3e8; % Wave frequency [Hz]
-c = 3e8; %/sqrt(3.18); % Wave speed [m/s] (Eq. 6.2 of Hubbard & Glasser 2005)
+c = 3e8/sqrt(3.1); % Wave speed [m/s] (Eq. 6.2 of Hubbard & Glasser 2005)
 
 % Antenna locations
-ant.loc = 'virtual'; % 'store1' 'other'
-ant.wid = 0.00333;
-txrx = [16 1]; % Default: [8 8]
-quadrant = 4; % Default: 4
+ant.loc = 'store1'; % 'store1' 'other'
+ant.wid = 1; %0.00333; % 0.00148675 0.00333 0.0075 0.0301
+txrx = [8 8]; % Default: [8 8]
+quadrant = 2; % Default: 4
 off = [2.49 -2.49]; % Default: [2.49 -2.49]
-dPhy = 1; % Default: 0.83 % NOTE that dPhy is half of the resulting element separation
+dPhy = 0.83; % Default: 0.83 % NOTE that dPhy is half of the resulting element separation
 
 doPlot = 1; 
 doHPBW = 1; 
-doSave = 0;
+doSave = 1;
 
 %% Calculate array geometry and array factor for different frequencies
 for ii = 1:length(ant.wid)
@@ -57,8 +57,10 @@ end
 %% Plot the array pattern for various frequencies 
 WComb = [ant.RE; W(1,:); WWeight]; 
 [fig_w,ax_w,pp] = plotBPRectangular(db(WComb(:,901:2701),'power'), thetaScA(:,901:2701), 50,[nan ant.wid]);%, txrx); % Unweighted
-fig_w = gcf; 
-set(fig_w,'units','normalized','position',[0 0 1 1/2])
+fig_w = gcf; box on
+%set(fig_w,'units','normalized','position',[0 0 1 1/2])
+%set(fig_w,'units','normalized','position',[0 0 1/3-0.088 1/3])
+set(fig_w,'units','normalized','position',[0 0 1/3-0.083 1/3])
 
 set(pp(1),'color','k','lineStyle','--')
 set(pp(2),'color', [51 153 255]/255,'lineStyle',':')
@@ -79,11 +81,11 @@ end
 
 if doSave
     % Create and cd to folder
-    %fileLoc = '~/Google Drive/Academic/papers/paper3/figs/paper/';
-    fileLoc = '~/Downloads/';
+    fileLoc = '~/Google Drive/Academic/papers/paper3/figs/';
+    %fileLoc = '~/Downloads/';
     cd(fileLoc)
     set(fig_w,'color','w')
     export_fig(fig_w,strcat(ant.type,'_AF_w_',num2str(thetaStA),'_',...
-        num2str(txrx(1)),'-',num2str(txrx(2)),'_',num2str(dPhy*1000),'.png'),'-m2');
+        num2str(txrx(1)),'-',num2str(txrx(2)),'_',num2str(dPhy*1000),'.png'),'-m6');
 end
 

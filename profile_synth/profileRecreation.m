@@ -28,23 +28,23 @@ end
 
 % Create Gaussian distribution of power return
 px = -90:1:90; % Slope angle
+distScalar = (68.27/2)/(10/9); % Factor to scale distribution to [0 1]
+
 switch cfg.scatterType
     case 'gaussian'
         % Internal
-        py = normpdf(px,0,cfg.sigma*(68.27/2)/(10/9));
-        py_min = min(py);
-        py_max = max(py);
+        py = normpdf(px,0,cfg.sigmai*distScalar);
+        py_min = min(py); py_max = max(py);
         py = (py-py_min) .* (1/(py_max-py_min)); % Power return scaled to dBV
         % Basal
-        pybed = normpdf(px,0,1*(68.27/2)/(10/9));
-        pybed_min = min(pybed);
-        pybed_max = max(pybed);
+        pybed = normpdf(px,0,cfg.sigmab*distScalar);
+        pybed_min = min(pybed); pybed_max = max(pybed);
         pybed = (pybed-pybed_min) .* (1/(pybed_max-pybed_min)); % Power return scaled to dBV
     case 'cosine'
         py = cosd(px);
 end
 
-% Plotting fancies c
+% Plot internal layer specularity
 fig_pwr = figure;
 plot(px,py)
 xlim([px(1) px(end)])
@@ -63,9 +63,9 @@ pRESLoc = [0 0 0]; % Location of radar on profile
 
 % Add internal layers to profile
 [rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,100,cfg.intLevel,'flat');
-[rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,200,cfg.intLevel,'slope',2);
-[rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,300,cfg.intLevel,'slope',5);
-[rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,400,cfg.intLevel,'slope',10);
+[rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,200,cfg.intLevel,'slope',5);
+[rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,300,cfg.intLevel,'slope',10);
+[rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,400,cfg.intLevel,'slope',15);
 
 % Add bed layer to profile
 [rz,zz_reflect] = assignLayer(xx,yy,rz,zz_reflect,cfg.bedDepth,cfg.bedLevel,'sine',cfg.bedRoughness,'addHill','addBed',cfg.bedMountain);
@@ -80,6 +80,9 @@ end
 % Plot profile
 fig_profsynth = plotimgprofile_gland(xx,yy,rz);
 plot3(pRESLoc(1),pRESLoc(1),pRESLoc(1),'ks','markerFaceColor','k','markerSize',8);
+
+%set(fig_profsynth,'Units','Normalized','Position', [0 0 1/3-0.035 1/3]);
+%imwrite(fig_profsynth, 'PS.tif','TIFF','Resolution',[2412 1665])
 
 %% Sum through all ranges
 
@@ -123,7 +126,6 @@ for ii = 1:length(cfg.thetaStA)
     % Loop through depths
     for jj = 1:length(depths)
         clear R_pix
-        %R_idx = nan(size(zz));
         
         % Locate pixels at specified range from source
         depth = zz_r(jj,R_loc(2)); % Depth vector
@@ -134,7 +136,6 @@ for ii = 1:length(cfg.thetaStA)
         R_pix(:,3) = zz_theta(R_idx); % Angle of identified pixels from point
         R_pix(:,4) = zz_reflect(R_idx); % Identification of layers in identified pixels
         
-        %clear w_rad_idx R_w
         wrad_idx = nan(size(R_pix,1),1); R_wrad = wrad_idx;
         R_wref = ones(size(R_pix,1),1);
         for kk = 1:size(R_pix,1)
@@ -145,12 +146,11 @@ for ii = 1:length(cfg.thetaStA)
             
             % Weight identified pixels to layer reflectivity
             if ~isnan(R_pix(kk,4))
-                if jj < cfg.bedDepth-10 % Separate bed from layer reflectivity
-                    [~,wref_idx] = min(abs(px-R_pix(kk,3)));
-                    R_wref(kk,1) = py(wref_idx);
+                [~,wref_idx] = min(abs(px-(R_pix(kk,3)-R_pix(kk,4))));
+                if jj < cfg.bedDepth-15 % Separate bed from layer reflectivity
+                    R_wref(kk,1) = py(wref_idx); % Internal layer reflectivity
                 else
-                    [~,wref_idx] = min(abs(px-R_pix(kk,3)));
-                    R_wref(kk,1) = pybed(wref_idx);
+                    R_wref(kk,1) = pybed(wref_idx); % Bed layer reflectivity
                 end
             end
         end
@@ -181,10 +181,7 @@ rz = R_sum;
 if cfg.doConvolution
     disp('Filtering profile with 2D convolution...')
     ftype = 'gaussian'; fsize = 7; fsigma = 1; fwindow = 2;
-    filt = (fspecial(ftype,fsize,fsigma)); % Guassian lowpass filter 
-    %thresh = (max([min(max(zz,[],1))  min(max(zz,[],2))])) ;
-    rz = medfilt2(rz,[fwindow,fwindow]); % Median filtering in 2 directions
-    rz = conv2(rz,filt,'same'); % 2-D convolution with designed filter
+    rz = pkConvol(rz,ftype,[fsize fsigma fwindow]);
 end
 
 % Plot profile return distribution (2D)
@@ -197,22 +194,25 @@ caxis([-120 20])
 legend = colorbar('Ticks',[-120 -100 -80 -60 -40 -20 0 20]);
 %legend.Label.String = 'dB (V_{rms})';
 
+%set(fig_prof2d, 'Units','Normalized','Position', [0 0 1/3 1/3]);
+
 %% Saving fancies
 
 if cfg.doSave
     try
-        %cd(cfg.fileLoc);
+        cd(cfg.fileLoc);
     catch
-        %mkdir(cfg.fileLoc); cd(cfg.fileLoc);
+        mkdir(cfg.fileLoc); cd(cfg.fileLoc);
     end
-    set([fig_prof1d fig_prof2d],'color','w')
-    export_fig(fig_prof1d,strcat(cfg.antSelect,'_PR_1d.png'),'-m2');
+    %set([fig_prof1d fig_prof2d],'color','w')
+    set(fig_prof2d,'color','w')
+    %export_fig(fig_prof1d,strcat(cfg.antSelect,'_PR_1d.png'),'-m2');
     %export_fig(fig_prof2d,strcat(cfg.antSelect,'_PR_2d.png'),'-m2');
     %export_fig(fig_prof2d,strcat(cfg.antSelect,'_',num2str(cfg.beamwidth),'_',num2str(cfg.dPhy),'_PR_2d.png'),'-m2');
-    export_fig(fig_prof2d,strcat(cfg.antSelect,'_',num2str(cfg.txrx(1)),'-',num2str(cfg.txrx(2)),'_',num2str(cfg.dPhy),'_PR_2d.png'),'-m2');
+    export_fig(fig_prof2d,strcat(cfg.antSelect,'_',num2str(cfg.txrx(1)),'-',num2str(cfg.txrx(2)),'_',num2str(cfg.dPhy),'_PR_2d.png'),'-m5');
     if cfg.doPlot
         set([fig_pwr fig_profsynth],'color','w')
-        export_fig(fig_pwr,'PD_pixel.png','-m2')
-        export_fig(fig_profsynth,'PS.png','-m2');
+        export_fig(fig_pwr,'PD_pixel.png','-m6')
+        export_fig(fig_profsynth,'PS.png','-m6');
     end
 end

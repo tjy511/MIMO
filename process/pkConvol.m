@@ -2,6 +2,7 @@ function vvOut = pkConvol(vvIn,ftype,param)
 % 2D Peak Convolution to smooth output radar imagery
 % param = [filterSize filterSigma filterWindow]
 % Default: 'gaussian' [7 1 4]
+% e.g. vvOut = pkConvol(vvIn,'gaussian',[7 1 4])
 % 
 % TJ Young
 % 20 February 2017

@@ -5,26 +5,26 @@
 
 %% Load imagery file and associated parameters
 close all
-deployment = 2; % 1 2 3
+deployment = 3; % 1 2 3
 switch deployment
     case 1
         fileIn = 'array2d_20140506-1813.mat';
-        cfg.phiLim = [90-45 90+60]; % Limits for phi (degrees) from x-axis vector [225 315]
+        cfg.phiLim = [270-60 270+60]; % Limits for phi (degrees) from x-axis vector [225 315]
         cfg.pkthresh = -50; % dB threshold level for peaks
         cfg.pktolm = 10; % 2D tolerance for peaks (bins in z-direction)
-        cfg.rThresh = 10; % Search range for pkselect (m in x-y direction); 
+        cfg.rThresh = 15; % Search range for pkselect (m in x-y direction); 
     case 2
         fileIn = 'array2d_20140726-1727.mat';
-        cfg.phiLim = [90 180]; % Limits for phi (degrees) from x-axis vector
+        cfg.phiLim = [270-45 270+60]; % Limits for phi (degrees) from x-axis vector
         cfg.pkthresh = -60; % dB threshold level for peaks
-        cfg.pktolm = 20; % 2D tolerance for peaks (bins in z-direction)
+        cfg.pktolm = 15; % 2D tolerance for peaks (bins in z-direction)
         cfg.rThresh = 15; % Search range for pkselect (bins in x-y direction); 
     case 3
         fileIn = 'array2d_20150703-1221.mat';
-        cfg.phiLim = [180-45 180+90]; % Limits for phi (degrees) from x-axis vector [225 315]
+        cfg.phiLim = [270-90 270+60]; % Limits for phi (degrees) from x-axis vector [225 315]
         cfg.pkthresh = -50; % dB threshold level for peaks
         cfg.pktolm = 10; % 2D tolerance for peaks (bins in z-direction)
-        cfg.rThresh = 8; % Search range for pkselect (bins in x-y direction); 
+        cfg.rThresh = 25; % Search range for pkselect (bins in x-y direction); 
 end
 load(fileIn,'xxPix','yyPix','imgPlane','dateStamp','R')
 
@@ -44,7 +44,7 @@ cfg.pkprom = 0; % Filter by prominence threshold
 %cfg.rThresh = 8; % Search range for pkselect (bins in x-y direction); 
 
 % Parameters for plotting
-cfg.doPlot = 1; % Turn on intermediate plotting
+cfg.doPlot = 0; % Turn on intermediate plotting
 cfg.doSave = 1; % Turn on figure exporting
 
 % Activate config
@@ -58,8 +58,8 @@ if cfg.doPlot == 0
 end
 
 % Parameters for depths
-%depths = [25:25:400];
-depths = int1.y(:,3);
+depths = [25:25:450];
+%depths = int1.y(:,3);
 
 %% Run through layers
 
@@ -70,7 +70,7 @@ for cc = 1:numel(depths)
     depth = depths(cc);
     xx = xxPix(depth,:);
     yy = yyPix(depth,:);
-    zz = imgPlane(:,:,depth);
+    zz = abs(imgPlane(:,:,depth));
     
     dx = mean(diff(xx)); dy = mean(diff(yy));
     pxy(cc,:) = xx; % Save 2D scale for plotting
@@ -120,7 +120,11 @@ for cc = 1:numel(depths)
         
         % Limit search to specified angle
         if isempty(cfg.phiLim) == 0
-            pInd = find(int2.phi > cfg.phiLim(1) & int2.phi < cfg.phiLim(2));
+            if cfg.phiLim(2) < cfg.phiLim(1)
+                pInd = find(int2.phi > cfg.phiLim(1) | int2.phi < cfg.phiLim(2)); 
+            else
+                pInd = find(int2.phi > cfg.phiLim(1) & int2.phi < cfg.phiLim(2));
+            end
             int2.x = int2.x(pInd); int2.y = int2.y(pInd);
             int2.r = int2.r(pInd); int2.theta = int2.theta(pInd); int2.phi = int2.phi(pInd);
             max2.idx = max2.idx(pInd); max2.pwr = max2.pwr(pInd);
@@ -133,9 +137,11 @@ for cc = 1:numel(depths)
             iIndy = find(abs(int1.y(:,3)-depth) < cfg.pktolm,1); % Find closest z within tolerance
             
             switch deployment % THIS IS TEMPORARY
-                case 1
+                case {1,2}
                     rInd = find(abs(int2.y-int1.y(iIndy,1))<cfg.rThresh*dy & abs(int2.x-int1.y(iIndy,2))<cfg.rThresh*dx);
-                case {2,3}
+                case {4}
+                    rInd = find(abs(int2.x-int1.x(iIndx,1))<cfg.rThresh*dy & abs(int2.x-int1.x(iIndx,2))<cfg.rThresh*dx);
+                case {3}
                     try rIndx = find(abs(int2.x-int1.x(iIndx,1))<cfg.rThresh*dx); end; % Only use layers within range threshold
                     try rIndy = find(abs(int2.y-int1.y(iIndy,1))<cfg.rThresh*dy); end % Only use layers within range threshold
                     if exist('rIndx','var') && exist('rIndy','var')
@@ -201,12 +207,13 @@ end
 
 switch deployment
     case 1
-        exclude = 13;
+        %exclude = 13;
     case 2
-        
+        %exclude = 6;
     case 3
+        exclude = [5 11];
+        lyr.x(exclude) = NaN; 
 end
-lyr.x(exclude) = NaN; 
 
 %% Visualise layer in 3 dimensions
 
@@ -217,12 +224,19 @@ plane.z0 = lyr.z;
 set(0,'DefaultFigureVisible','on')
 
 %fig = plotlayers_gland(plane.x0,plane.y0,plane.z0,pxy,ppr);
-fig = plotlayers_gland(plane.x0,plane.y0,plane.z0,pxy,lyr.theta);
+%fig = plotlayers_gland(plane.x0,plane.y0,plane.z0,pxy,lyr.theta);
+fig = plotlayers_gland(plane.x0,plane.y0,plane.z0,repmat(pxy(18,:),[18 1]),lyr.theta);
 title(['3D layer profile at at Date/Time: ', datestr(dateStamp)])
 zLim = -325;
-xlim([zLim/2 -zLim/2])
-ylim([zLim/2 -zLim/2])
-zlim([zLim 0])
+xlim([-150 150])
+ylim([-150 150])
+%xlim([zLim/2 -zLim/2])
+%ylim([zLim/2 -zLim/2])
+zlim([zLim 10])
+view(-20,20);
+box on
+
+set(fig, 'Units','Normalized','Position', [0 0 1/3-0.044 1/3]);
 
 %% Stats
 nanmean(lyr.phi)
@@ -240,5 +254,5 @@ if cfg.doSave
         mkdir(fileLoc); cd(fileLoc);
     end
     set(fig,'color','w')
-    export_fig(fig,strcat(fileIn(9:16),'_3d.png'),'-m2');
+    export_fig(fig,strcat(fileIn(9:16),'_3d.png'),'-m6');
 end

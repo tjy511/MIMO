@@ -1,12 +1,12 @@
-function cfg = mimo_config_field_mtn
+function cfg = mimo_config_sim_mtn
 % Config for profile recreations
 
 % Default config
-cfg.notes = 'Setup for field recreation, with added subglacial mountain';
+cfg.notes = 'Setup for best simulation, with added subglacial mountain';
 
 % Layer profiles
 cfg.noiseFloor = -100; % Noise floor level [dBV]
-cfg.intLevel = -40; % Internal reflector reflectivity [dBV]
+cfg.intLevel = -30; % Internal reflector reflectivity [dBV]
 cfg.bedLevel = -20; % Bed reflector reflectivity [dBV]
 cfg.bedDepth = 600; % Depth of bed reflector [m]
 cfg.bedRoughness = [pi 10]; % Bed roughness; [amplitude period]
@@ -14,21 +14,22 @@ cfg.bedMountain = [3/8 1/16 20]; % Subglacial bump; [centre-location width heigh
 
 % Backscatter
 cfg.scatterType = 'gaussian'; % 'gaussian' 'cosine'
-cfg.sigma = 0.25; % Scattering factor (standard bell curve = 1) [degrees]
+cfg.sigmai = 0.025; % Specularity factor for internal layer (standard bell curve = 1) [degrees]
+cfg.sigmab = 1; % Specularity factor for bed layer (standard bell curve = 1) [degrees]
 
 % Antenna location
-cfg.antSetup = 'store1'; % 'store1' 'real' 'virtual'
-cfg.txrx = [8 8]; % Row/Column of antenna array; Default: [8 8]
+cfg.antSetup = 'virtual'; % 'store1' 'real' 'virtual'
+cfg.txrx = [32 1]; % Row/Column of antenna array; Default: [8 8]
 cfg.quadrant = 2; % Default: 2
 cfg.off = [2.49 -2.49]; % Offset between Tx1 / Rx1; Default: [2.49 -2.49] [m]
-cfg.beamwidth = 1; % Variable for beam width (default = 1)
-cfg.dPhy = 0.83; % Antenna separation; Default: 0.83 [m]
+cfg.beamwidth = 0.00333; % Variable for beam width (default = 1)
+cfg.dPhy = 1; % Antenna separation; Default: 0.83 [m]
 
 % Beam forming
 cfg.freq = 3e8; % MIMO cfg.frequency [Hz]
 cfg.thetaStA = -30:30; % Steering angle range [degrees]
-cfg.antSelect = 'bowtie'; % Antenna selection ('isotropic' 'pencil' 'bowtie' 'helix' 'dipole')
-cfg.c = 3e8/sqrt(3.1); % Speed of wave propagation (3e8/sqrt(3.18) in ice);
+cfg.antSelect = 'pencil'; % Antenna selection ('isotropic' 'pencil' 'bowtie' 'helix' 'dipole')
+cfg.c = 3e8; %3e8/sqrt(3.1); % Speed of wave propagation (3e8/sqrt(3.18) in ice);
 cfg.weight = 1; % Weighting beam with array factor [binary]
 
 % Saving

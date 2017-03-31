@@ -18,7 +18,7 @@ function [varargout] = antennaLoc(type,varargin)
 % Output variables
 % - tx: Location of Tx real positions
 % - rx: Location of Rx real positions
-% - ve: Location of antenna virtual positions
+% - ve: Location of antenna virtual positions [Tx Rx]
 %
 % Syntax
 

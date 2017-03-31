@@ -20,10 +20,10 @@ processing = 'single'; % Single or multiple chirps 'ts' 'single'
 fig_dir = '~/Downloads/';
 
 bstart = 1; % Starting burst (normally 1)
-leapFrog = 1*24; % In bursts. Set to 1 if processing = 'single'.
+leapFrog = 1*3; % In bursts. Set to 1 if processing = 'single'.
 
 % Parameters
-dphy = 0.83; % Antenna separation (centre-to-centre)
+dphy = 0.83; % Real element separation (centre-to-centre)
 fs=40000; % Samples per chirp (Note 40001 for deployment4)
 Npix=100; % number of pixels in Npix*Npix image plane.
 fov=25; % field of view plus-minus degrees.
@@ -39,7 +39,7 @@ pp_slicex=zeros(length(Rs),Npix);
 r=zeros(Npix*Npix,64);
 
 %% Load antenna locations
-folderLoc = '/Users/tjy511/OneDrive - University Of Cambridge/radar/data/field/array/';
+folderLoc = '~/OneDrive - University Of Cambridge/radar/data/field/array/';
 switch processing
     case 'ts'
         switch deployment
@@ -53,7 +53,7 @@ switch processing
                 data_dir = strcat(folderLoc,'unattended/deployment3/timeseries/');
             case 3
                 [txLoc,rxLoc,ve] = antennaLoc('store3',1);
-                tsList = readtable('radarlist4a.dat');
+                tsList = readtable('radarlist4b.dat');
                 data_dir = strcat(folderLoc,'unattended/deployment4/timeseries/');
         end
     case 'single'
@@ -124,8 +124,10 @@ for fileNum = bstart:leapFrog:size(tsList,1)
 %         ylabel('y position (m)')
 %         title(['Pixel locations at range R=', num2str(R), ' metres'])
 %         Recentre virtual element array to origin
-        ve_offset=ve-(1+7*dphy/4);
-        ve_offset(:,2)=-1*(ve_offset(:,2)+2*(1+7*dphy/4));
+%         ve_offset=ve-(1+7*dphy/4);
+%         ve_offset(:,2)=-1*(ve_offset(:,2)+2*(1+7*dphy/4));
+        centroid = mean(ve);
+        ve_offset = ve-centroid;
 %         plot(ve_offset(:,1),ve_offset(:,2),'d')
         
         % Calculate distance r of virtual elements to each pixel on image plane
@@ -150,12 +152,10 @@ for fileNum = bstart:leapFrog:size(tsList,1)
                 B(k,v)=round(r(k,v)*padfactor/deltaR);
                 
                 % Weight value of the return in this range bin
-                % Not sure what "weight" means tbh.
                 weight=exp(-j*4*pi*r(k,v)/lambda_g);
                 specWeighted=ampspec(v,B(k,v))*weight;
                 
                 % Sum for all virtual elements
-                % Not sure what this is again...
                 %         P_pix(k,1)=P_pix(k,1)+ampspec(v,B(k,v));
                 P_pix(k,1)=P_pix(k,1)+specWeighted;
             end
@@ -224,7 +224,7 @@ for fileNum = bstart:leapFrog:size(tsList,1)
         % %    end
         
         vdat.dphy = dphy;
-        imgPlane(:,:,ss)=abs(PP_pix);
+        imgPlane(:,:,ss)=PP_pix;
         yyPix(ss,:)=yPix;
         xxPix(ss,:)=xPix;
         pp_slicex(ss,:)=(abs(PP_pix(Npix/2,:)));
@@ -235,7 +235,8 @@ for fileNum = bstart:leapFrog:size(tsList,1)
     fileDate = datestr(dateStamp,'yyyymmdd-HHMM');
     fileName = strcat('array2d_', fileDate, '.mat');
     fileNameFull = strcat(fig_dir,fileName);
-    save(fileNameFull,'vdat','PP_pix','Rs','xxPix','yyPix');
+    %save(fileNameFull,'vdat','imgPlane','Rs','xxPix','yyPix');
+    save(fileNameFull);
     disp(['Saved data results as file: ', fileName])
     end
 end
