@@ -14,21 +14,26 @@
 
 % Identify data and type
 startup
-deployment = 3; % 1 2 3
+deployment = 4; % 1 2 3 4
+flowalign = 'parallel'; % Only for Deployment 4 ('parallel' 'perpendicular')
 processing = 'single'; % Single or multiple chirps 'ts' 'single'
 %fig_dir = strcat(rwd,'/data/process/mimo/attended/');
 fig_dir = '~/Downloads/';
+doPlot = 1;
 
 bstart = 1; % Starting burst (normally 1)
-leapFrog = 1*3; % In bursts. Set to 1 if processing = 'single'.
+leapFrog = 1; % In bursts. Set to 1 if processing = 'single'.
 
 % Parameters
 dphy = 0.83; % Real element separation (centre-to-centre)
-fs=40000; % Samples per chirp (Note 40001 for deployment4)
+fs=40001; % Samples per chirp (Note 40001 for 2015 and 2017 data)
 Npix=100; % number of pixels in Npix*Npix image plane.
 fov=25; % field of view plus-minus degrees.
 %R=617.23; % Bed depth (Greenland)
-Rs=10:1:650; % Range slices
+yRange = [10 1250]; % Depth range of processing [m] [10 650] [10 1000]
+xRange = tand(fov)*yRange(2); xRange = ceil(xRange/50)*50; xRange = [-xRange xRange];
+dy = 1; % Depth step [m]
+Rs=yRange(1):dy:yRange(2); % Range slices
 
 % Pre-allocate arrays
 imgPlane=zeros(Npix,Npix,length(Rs));
@@ -40,6 +45,7 @@ r=zeros(Npix*Npix,64);
 
 %% Load antenna locations
 folderLoc = '~/OneDrive - University Of Cambridge/radar/data/field/array/';
+
 switch processing
     case 'ts'
         switch deployment
@@ -70,9 +76,18 @@ switch processing
                 [txLoc,rxLoc,ve] = antennaLoc('store3',1);
                 tsList = 'Survey_2015-07-03_122127.dat';
                 data_dir = strcat(folderLoc,'attended/combined/20150705/');
+            case 4
+                [txLoc,rxLoc,ve] = antennaLoc('store4',1);
+                switch flowalign
+                    case 'parallel'
+                        tsList = 'Survey-2017-07-25_145610.dat';
+                    case 'perpendicular'
+                        tsList = 'Survey-2017-07-25_170452.dat';
+                end
+                data_dir = '~/Downloads/';
         end
 end
-ant = [txLoc(:,1) rxLoc(:,2)];
+%ant = [txLoc(:,1) rxLoc(:,2)];
 
 %% Load file
 
@@ -85,7 +100,9 @@ for fileNum = bstart:leapFrog:size(tsList,1)
             bnum = tsList.burst(xf);
             vdat = LoadBurstRMB4(fullfile(data_dir,tsList.file{xf}),bnum,fs);
         case 'single'
-            vdat = LoadBurstRMB4(fullfile(data_dir,tsList),1,fs);
+            %vdat = LoadBurstRMB4(fullfile(data_dir,tsList),1,fs);
+            vdat = fmcw_load(fullfile(data_dir,tsList));
+            vdat = fmcw_burst_mean(vdat); 
     end
     dateStamp=vdat.TimeStamp;
     fileDate = datestr(dateStamp,'yyyymmdd-HHMM');
@@ -94,6 +111,8 @@ for fileNum = bstart:leapFrog:size(tsList,1)
     if exist(fileName,'file')==0
     disp('*********************************************************')
     disp(['Running script on burst obtained at: ',datestr(dateStamp)])
+    
+    close all 
     
     %% Iterate processing for every depth step
     for ss=1:length(Rs)
@@ -165,7 +184,7 @@ for fileNum = bstart:leapFrog:size(tsList,1)
         PP_pix=reshape(P_pix,Npix,Npix);
 
         %         % Visualise results
-        close all
+        %close all
         %         %figure
         yPix=ImgPlane(1:Npix,2);
         xPix=yPix;
@@ -229,6 +248,41 @@ for fileNum = bstart:leapFrog:size(tsList,1)
         xxPix(ss,:)=xPix;
         pp_slicex(ss,:)=(abs(PP_pix(Npix/2,:)));
         pp_slicey(ss,:)=(abs(PP_pix(:,Npix/2)));
+        
+        % Plot figure
+        if doPlot == 1
+            figure(1)
+            set(gcf,'position',[0 1200 600 600])
+            grid on, box on, axis equal
+            surf(xxPix,Rs,db(pp_slicex),'edgeColor','none')
+            view(0,-90)
+            colormap(jet)
+            caxis([-80 -30])
+            legend = colorbar('Ticks',[-100 -80 -60 -40 -20]);
+            legend.Label.String = 'dB (Vrms)';
+            xlabel('Range (m)')
+            ylabel('Depth (m)')
+            xlim(xRange)
+            ylim(yRange)
+            title(['Vertical 2D profile (x-direction) at Date/Time: ', datestr(dateStamp)])
+            
+            figure(2)
+            set(gcf,'position',[601 1200 600 600])
+            grid on, box on, axis equal
+            surf(xxPix,Rs,db(pp_slicey),'edgeColor','none')
+            view(0,-90)
+            colormap(jet)
+            caxis([-80 -30])
+            legend = colorbar('Ticks',[-100 -80 -60 -40 -20]);
+            legend.Label.String = 'dB (Vrms)';
+            xlabel('Range (m)')
+            ylabel('Depth (m)')
+            xlim(xRange)
+            ylim(yRange)
+            title(['Vertical 2D profile (y-direction) at Date/Time: ', datestr(dateStamp)])
+            
+            pause(0.01)
+        end
     end
     
     % Save file

@@ -35,25 +35,37 @@ function [varargout] = antennaLoc(type,varargin)
 
 switch type
     case 'store1'
-        dPhy = 0.83; off = (2350/sqrt(2) + 830/2)/1000;
+        dPhy = 0.83; off = (2350/sqrt(2) + 820/2)/1000;
         quadrant = 2; txrx = [8 8];
+        virtLayout = 'planar';
         if nargin == 1
             doPlot = varargin{1};
         else
             doPlot = 1;
         end
     case 'store2'
-        dPhy = 0.83; off = (2700/sqrt(2) + 830/2)/1000;
+        dPhy = 0.83; off = (2700/sqrt(2) + 820/2)/1000;
         quadrant = 3; txrx = [8 8];
+        virtLayout = 'planar';
         if nargin == 1
             doPlot = varargin{1};
         else
             doPlot = 1;
         end
     case 'store3'
-        dPhy = 0.83; off = (2480/sqrt(2) + 830/2)/1000;
+        dPhy = 0.83; off = (2480/sqrt(2) + 820/2)/1000;
         quadrant = 2; txrx = [8 8];
+        virtLayout = 'planar';
         if nargin == 1
+            doPlot = varargin{1};
+        else
+            doPlot = 1;
+        end
+    case 'store4'
+        dPhy = 0.83; off = 0;
+        virtLayout = 'linear';
+        quadrant = 1; txrx = [8 4];
+        if nargin > 1
             doPlot = varargin{1};
         else
             doPlot = 1;
@@ -73,6 +85,7 @@ switch type
         txrx = varargin{1};
         dPhy = varargin{2};
         quadrant = 0; 
+        virtLayout = 'planar';
         off = 0; 
         if nargin == 4
             doPlot = varargin{3};
@@ -105,25 +118,42 @@ end
 % xOff = off(1); % Offset from x-origin
 % yOff = off(2); % Offset from y-origin
 
-% Tx antenna real positions [m]
-for ii = 1:txrx(1) % x-coord
-    if ii == 1
-        tx(1,1) = xOff;
-    else
-        tx(ii,1) = tx(ii-1,1) + dPhyx;
-    end
+switch virtLayout
+    case 'planar'
+        % Tx antenna real positions [m]
+        for ii = 1:txrx(1) % x-coord
+            if ii == 1
+                tx(1,1) = xOff;
+            else
+                tx(ii,1) = tx(ii-1,1) + dPhyx;
+            end
+        end
+        tx(:,2) = 0; % y-coord
+        
+        % Rx antenna real positions [m]
+        rx(1:txrx(2),1) = 0; % x-coord
+        for ii = 1:txrx(2) % y-coord
+            if ii == 1
+                rx(1,2) = yOff;
+            else
+                rx(ii,2) = rx(ii-1,2) + dPhyy;
+            end
+        end
+    case 'linear' % TEMPORARY; change to make general later!
+        tx(1,:) = [0 0];
+        tx(2,:) = [tx(1,1)+0.83*2 0];
+        tx(3,:) = [tx(2,1)+0.83*2 0];
+        tx(4,:) = [tx(3,1)+0.83*2 0];
+        tx(5,:) = [tx(4,1)+0.83*2 0];
+        tx(6,:) = [tx(5,1)+0.83*2 0];
+        tx(7,:) = [tx(6,1)+0.83*2 0];
+        tx(8,:) = [tx(7,1)+0.83*2 0];
+        rx(1,:) = [-0.83/2-0.83 2.03];
+        rx(2,:) = [-0.83/2 2.03];
+        rx(3,:) = [tx(8,1)+0.83/2 2.03];
+        rx(4,:) = [rx(3,1)+0.83 2.03];
 end
-tx(:,2) = 0; % y-coord
 
-% Rx antenna real positions [m]
-rx(1:txrx(2),1) = 0; % x-coord
-for ii = 1:txrx(2) % y-coord
-    if ii == 1
-        rx(1,2) = yOff;
-    else
-        rx(ii,2) = rx(ii-1,2) + dPhyy;
-    end
-end
 
 %% Establish location of antenna virtual positions
 
@@ -137,7 +167,6 @@ counter = 0;
     end
 
 %% Plot virtual elements
-
 
 if doPlot == 0
     set(0,'DefaultFigureVisible','off')

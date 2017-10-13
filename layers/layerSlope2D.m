@@ -6,7 +6,7 @@
 %% Config parameters
 
 % File and dimensions
-deployment = 3; % 1 2 3 
+deployment = 1; % 1 2 3 
 cfg.slice = 'yy'; % 'xx' 'yy'
 
 % Filter
